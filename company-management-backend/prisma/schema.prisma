@@ -1,0 +1,96 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Specifies the client generator. 'prisma-client-js' is the default and what we need.
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Defines the database connection. We're using PostgreSQL and getting the URL from our .env file.
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums define a set of allowed values for a field.
+enum UserRole {
+  EMPLOYEE
+  HR
+  ADMIN
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// --- MODELS ---
+
+// The Employee model is the core of our authentication system.
+model Employee {
+  id          String   @id @default(cuid()) // Unique ID, cuid() is a collision-resistant ID
+  email       String   @unique // Email must be unique for each employee
+  password    String   // The hashed password
+  role        UserRole @default(EMPLOYEE) // The role of the employee, defaults to EMPLOYEE
+
+  // --- Relations ---
+  profile     Profile?     // Each employee has one Profile (optional)
+  attendances Attendance[] // Each employee can have many Attendance records
+  leaves      Leave[]      // Each employee can have many Leave records
+
+  createdAt DateTime @default(now()) // Timestamp for when the record was created
+  updatedAt DateTime @updatedAt     // Timestamp for when the record was last updated
+}
+
+// The Profile model holds personal information related to an Employee.
+model Profile {
+  id               String   @id @default(cuid())
+  firstName        String
+  lastName         String
+  phone            String? // The '?' makes a field optional
+  address          String?
+  emergencyContact String?
+  dateOfJoining    DateTime
+
+  // --- Relations ---
+  // This defines a one-to-one relationship with the Employee model.
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeId String   @unique // The foreign key, must be unique
+
+  department   Department? @relation(fields: [departmentId], references: [id])
+  departmentId String?
+}
+
+model Department {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  employees Profile[] // A department can have many employee profiles
+}
+
+model Attendance {
+  id           String    @id @default(cuid())
+  checkIn      DateTime  // Timestamp when employee checks in
+  checkOut     DateTime? // Timestamp when employee checks out (optional until they do)
+  workingHours Float?    // Calculated hours (optional until checkout)
+
+  // --- Relations ---
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeId String
+  createdAt  DateTime @default(now())
+}
+
+model Leave {
+  id        String      @id @default(cuid())
+  leaveType String
+  startDate DateTime
+  endDate   DateTime
+  reason    String
+  status    LeaveStatus @default(PENDING) // Status defaults to PENDING
+
+  // --- Relations ---
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
