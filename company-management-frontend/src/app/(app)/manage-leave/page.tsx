@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { format, parseISO } from "date-fns";
-import { Button } from "@/components/ui/button";
+import toast from "react-hot-toast"; // <-- 1. Import from react-hot-toast
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -13,24 +13,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   getAllLeaveRequests,
   updateLeaveStatus,
   LeaveRecord,
+  LeaveRecordWithEmployee,
 } from "@/services/leaveService";
-import { cn } from "@/lib/utils";
-import toast from "react-hot-toast";
-
-// We need to add the employee's profile to the LeaveRecord type for this page
-type LeaveRecordWithEmployee = LeaveRecord & {
-  employee: {
-    profile: {
-      firstName: string;
-      lastName: string;
-    } | null;
-  };
-};
 
 export default function ManageLeavePage() {
   const [requests, setRequests] = useState<LeaveRecordWithEmployee[]>([]);
@@ -42,7 +37,8 @@ export default function ManageLeavePage() {
       const data = await getAllLeaveRequests();
       setRequests(data);
     } catch (error) {
-      console.error(error);
+      // 2. Use react-hot-toast for errors
+      toast.error("Failed to fetch leave requests.");
     } finally {
       setIsLoading(false);
     }
@@ -52,17 +48,18 @@ export default function ManageLeavePage() {
     fetchAllRequests();
   }, []);
 
-  const handleUpdateRequest = async (
+  const handleStatusChange = async (
     leaveId: string,
-    status: "APPROVED" | "REJECTED"
+    status: "APPROVED" | "PENDING" | "REJECTED"
   ) => {
     try {
       await updateLeaveStatus(leaveId, status);
-      toast(`Request has been ${status.toLowerCase()}.`);
-      // Refresh the list to show the change
+      // 3. Use react-hot-toast for success
+      toast.success(`Request status has been updated.`);
       fetchAllRequests();
     } catch (error) {
-      console.error(error);
+      // 4. Use react-hot-toast for update errors
+      toast.error("Failed to update the request.");
     }
   };
 
@@ -94,7 +91,7 @@ export default function ManageLeavePage() {
                 <TableHead>Type</TableHead>
                 <TableHead>Dates</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-center">Change Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -123,31 +120,23 @@ export default function ManageLeavePage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      {/* Only show buttons for PENDING requests */}
-                      {req.status === "PENDING" && (
-                        <div className="space-x-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-green-600 border-green-600 hover:bg-green-100 hover:text-green-700"
-                            onClick={() =>
-                              handleUpdateRequest(req.id, "APPROVED")
-                            }
-                          >
-                            Approve
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-red-600 border-red-600 hover:bg-red-100 hover:text-red-700"
-                            onClick={() =>
-                              handleUpdateRequest(req.id, "REJECTED")
-                            }
-                          >
-                            Reject
-                          </Button>
-                        </div>
-                      )}
+                      <Select
+                        defaultValue={req.status}
+                        onValueChange={(
+                          newStatus: "APPROVED" | "PENDING" | "REJECTED"
+                        ) => {
+                          handleStatusChange(req.id, newStatus);
+                        }}
+                      >
+                        <SelectTrigger className="w-[120px]">
+                          <SelectValue placeholder="Set status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="PENDING">Pending</SelectItem>
+                          <SelectItem value="APPROVED">Approved</SelectItem>
+                          <SelectItem value="REJECTED">Rejected</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </TableCell>
                   </TableRow>
                 ))

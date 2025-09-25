@@ -56,7 +56,7 @@ export const applyForLeave = async (
 
 export const updateLeaveStatus = async (
   leaveId: string,
-  status: "APPROVED" | "REJECTED"
+  status: "APPROVED" | "REJECTED" | "PENDING"
 ): Promise<LeaveRecord> => {
   const response = await api.patch(`/leave/requests/${leaveId}`, { status });
   return response.data.data;
