@@ -1,18 +1,19 @@
 {
   "compilerOptions": {
-    "target": "es2020", // Compile to a modern version of JavaScript
-    "module": "commonjs", // Use the standard Node.js module system
-    "rootDir": "./src", // Where our source TypeScript files are
-    "outDir": "./dist", // Where the compiled JavaScript will go
-    "esModuleInterop": true, // Allows for better interoperability between module systems
+    "target": "es2020",
+    "module": "commonjs",
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "strict": true, // Enforces strict type-checking, catching many bugs
+    "strict": true,
     "skipLibCheck": true,
-    "baseUrl": ".", // Allows for custom path aliases
+
+    "baseUrl": "src", // 👈 IMPORTANT: should be "src" not "."
     "paths": {
-      "@/*": ["src/*"] // Set up a handy alias: `@/` will point to the `src` folder
+      "@/*": ["*"] // 👈 no extra "src"
     }
   },
-  "include": ["src/**/*"], // Tell TypeScript to only compile files inside src
+  "include": ["src/**/*"],
   "exclude": ["node_modules"]
 }
