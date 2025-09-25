@@ -11,6 +11,7 @@ import {
   getMe,
   updateMe,
   getAllEmployees,
+  getEmployeeByIdController,
 } from '../controllers/employee.controller';
 
 const router = Router();
@@ -37,4 +38,10 @@ router
   // PATCH /api/v1/employees/me
   .patch(protect, validate(updateProfileSchema), updateMe); // Any logged-in user can access this.
 router.get('/', protect, authorize('ADMIN', 'HR'), getAllEmployees);
+router.get(
+  '/:id',
+  protect,
+  authorize('ADMIN', 'HR'),
+  getEmployeeByIdController,
+);
 export default router;

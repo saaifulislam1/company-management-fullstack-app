@@ -8,6 +8,7 @@ export interface LeaveRecord {
   endDate: string; // ISO date string
   reason: string;
   status: "PENDING" | "APPROVED" | "REJECTED";
+  employeeId: string;
 }
 
 // Defines the shape of the data needed to apply for leave

@@ -19,5 +19,6 @@ export const updateProfileSchema = z.object({
     lastName: z.string().min(1, 'Last name is required').optional(),
     phone: z.string().optional(),
     address: z.string().optional(),
+    emergencyContact: z.string().optional(), // <-- Add this line
   }),
 });

@@ -33,6 +33,7 @@ const profileFormSchema = z.object({
   lastName: z.string().min(1, "Last name is required"),
   phone: z.string().optional(),
   address: z.string().optional(),
+  emergencyContact: z.string().optional(), // <-- Add here
 });
 
 export default function ProfilePage() {
@@ -45,6 +46,7 @@ export default function ProfilePage() {
       lastName: "",
       phone: "",
       address: "",
+      emergencyContact: "",
     },
   });
 
@@ -61,6 +63,7 @@ export default function ProfilePage() {
             lastName: profile.lastName || "",
             phone: profile.phone || "",
             address: profile.address || "",
+            emergencyContact: profile.emergencyContact || "",
           });
         } catch (error) {
           // 2. Use react-hot-toast for errors
@@ -146,6 +149,22 @@ export default function ProfilePage() {
                       <FormLabel>Address</FormLabel>
                       <FormControl>
                         <Input placeholder="Your address" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="emergencyContact"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Emergency Contact</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g., Jane Doe - 01XXXXXXXXX"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

@@ -7,6 +7,7 @@ import {
   getEmployeeProfile,
   updateEmployeeProfile,
   findAllEmployees,
+  findEmployeeById,
 } from '../services/employee.service';
 
 export const register = asyncHandler(
@@ -52,3 +53,18 @@ export const getAllEmployees = asyncHandler(async (_req, res) => {
       new ApiResponse(200, employees, 'All employees fetched successfully'),
     );
 });
+export const getEmployeeByIdController = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    // Get the employee ID from the URL parameters (e.g., /employees/abc-123)
+    const { id } = req.params;
+
+    // Call the service to find the employee
+    const employee = await findEmployeeById(id);
+
+    res
+      .status(200)
+      .json(
+        new ApiResponse(200, employee, 'Employee profile fetched successfully'),
+      );
+  },
+);

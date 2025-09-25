@@ -26,3 +26,7 @@ export const updateMyProfile = async (profileData: {
   const response = await api.patch("/employees/me", profileData);
   return response.data.data;
 };
+export const getEmployeeProfileById = async (employeeId: string) => {
+  const response = await api.get(`/employees/${employeeId}`);
+  return response.data.data;
+};

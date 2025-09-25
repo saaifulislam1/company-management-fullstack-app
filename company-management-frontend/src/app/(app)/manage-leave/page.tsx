@@ -26,6 +26,7 @@ import {
   LeaveRecord,
   LeaveRecordWithEmployee,
 } from "@/services/leaveService";
+import Link from "next/link";
 
 export default function ManageLeavePage() {
   const [requests, setRequests] = useState<LeaveRecordWithEmployee[]>([]);
@@ -105,9 +106,14 @@ export default function ManageLeavePage() {
                 requests.map((req) => (
                   <TableRow key={req.id}>
                     <TableCell className="font-medium">
-                      {req.employee.profile
-                        ? `${req.employee.profile.firstName} ${req.employee.profile.lastName}`
-                        : "N/A"}
+                      <Link
+                        href={`/employees/${req.employeeId}`} // <-- Use the employeeId from the record
+                        className="hover:underline"
+                      >
+                        {req.employee.profile
+                          ? `${req.employee.profile.firstName} ${req.employee.profile.lastName}`
+                          : "N/A"}
+                      </Link>
                     </TableCell>
                     <TableCell>{req.leaveType}</TableCell>
                     <TableCell>

@@ -131,3 +131,23 @@ export const updateEmployeeProfile = async (
     },
   });
 };
+
+export const findEmployeeById = async (employeeId: string) => {
+  const employee = await prisma.employee.findUnique({
+    where: { id: employeeId },
+    // Use `select` to explicitly choose which fields to return for security
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      profile: true, // Include the full related profile object
+    },
+  });
+
+  // If no employee is found with that ID, throw a clear error
+  if (!employee) {
+    throw new ApiError(404, 'Employee not found');
+  }
+
+  return employee;
+};
