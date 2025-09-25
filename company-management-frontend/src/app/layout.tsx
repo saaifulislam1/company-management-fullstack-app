@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 // Import Poppins from next/font
 import { Poppins } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/providers/AuthProvider";
 
 // Configure the Poppins font
 const poppins = Poppins({
@@ -22,7 +23,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       {/* Apply the font class to the body */}
-      <body className={poppins.className}>{children}</body>
+      <body className={poppins.className}>
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }
