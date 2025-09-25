@@ -27,6 +27,12 @@ export const getLeaveHistory = async (): Promise<LeaveRecord[]> => {
   return response.data.data;
 };
 
+export const getAllLeaveRequests = async (): Promise<LeaveRecord[]> => {
+  const response = await api.get("/leave/requests");
+  // The actual data is nested under `data` twice due to our backend ApiResponse and axios response
+  return response.data.data;
+};
+
 /**
  * @service applyForLeave
  * @description Submits a new leave application.
