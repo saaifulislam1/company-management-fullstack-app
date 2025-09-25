@@ -18,6 +18,14 @@ export interface LeaveApplicationData {
   reason: string;
 }
 
+export interface LeaveRecordWithEmployee extends LeaveRecord {
+  employee: {
+    profile: {
+      firstName: string;
+      lastName: string;
+    } | null;
+  };
+}
 /**
  * @service getLeaveHistory
  * @description Fetches the leave history for the logged-in user.
@@ -27,7 +35,9 @@ export const getLeaveHistory = async (): Promise<LeaveRecord[]> => {
   return response.data.data;
 };
 
-export const getAllLeaveRequests = async (): Promise<LeaveRecord[]> => {
+export const getAllLeaveRequests = async (): Promise<
+  LeaveRecordWithEmployee[]
+> => {
   const response = await api.get("/leave/requests");
   // The actual data is nested under `data` twice due to our backend ApiResponse and axios response
   return response.data.data;
@@ -41,5 +51,13 @@ export const applyForLeave = async (
   data: LeaveApplicationData
 ): Promise<LeaveRecord> => {
   const response = await api.post("/leave/apply", data);
+  return response.data.data;
+};
+
+export const updateLeaveStatus = async (
+  leaveId: string,
+  status: "APPROVED" | "REJECTED"
+): Promise<LeaveRecord> => {
+  const response = await api.patch(`/leave/requests/${leaveId}`, { status });
   return response.data.data;
 };
