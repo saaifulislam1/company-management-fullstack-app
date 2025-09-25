@@ -6,7 +6,12 @@ import {
   registerEmployeeSchema,
   updateProfileSchema,
 } from '../validators/employee.validator';
-import { register, getMe, updateMe } from '../controllers/employee.controller';
+import {
+  register,
+  getMe,
+  updateMe,
+  getAllEmployees,
+} from '../controllers/employee.controller';
 
 const router = Router();
 
@@ -31,5 +36,5 @@ router
   .get(protect, getMe) // Any logged-in user can access this.
   // PATCH /api/v1/employees/me
   .patch(protect, validate(updateProfileSchema), updateMe); // Any logged-in user can access this.
-
+router.get('/', protect, authorize('ADMIN', 'HR'), getAllEmployees);
 export default router;

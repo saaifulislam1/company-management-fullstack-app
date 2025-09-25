@@ -11,12 +11,14 @@ import {
 import { Users, CalendarOff, Briefcase, Clock } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import Link from "next/link";
+import { getAllEmployees } from "@/services/employeeService";
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const [stats, setStats] = useState({
     pendingLeaves: 0,
     latestCheckIn: "N/A",
+    employeeCount: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -32,7 +34,12 @@ export default function DashboardPage() {
           const pendingCount = allRequests.filter(
             (req) => req.status === "PENDING"
           ).length;
-          setStats((prev) => ({ ...prev, pendingLeaves: pendingCount }));
+          const allEmployees = await getAllEmployees();
+          setStats((prev) => ({
+            ...prev,
+            pendingLeaves: pendingCount,
+            employeeCount: allEmployees.length,
+          }));
         }
 
         // All users can fetch their own attendance for a summary
@@ -59,7 +66,11 @@ export default function DashboardPage() {
         value={isLoading ? "..." : stats.pendingLeaves.toString()}
         icon={CalendarOff}
       />
-      <DashboardCard title="Total Employees" value="12" icon={Users} />
+      <DashboardCard
+        title="Total Employees"
+        value={isLoading ? "..." : stats.employeeCount.toString()}
+        icon={Users}
+      />
       {/* Add more admin-specific cards here */}
     </>
   );

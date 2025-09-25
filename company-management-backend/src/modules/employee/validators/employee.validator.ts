@@ -14,10 +14,10 @@ export const registerEmployeeSchema = z.object({
 
 export const updateProfileSchema = z.object({
   body: z.object({
+    // The fields to validate must be inside this 'body' object
     firstName: z.string().min(1, 'First name is required').optional(),
     lastName: z.string().min(1, 'Last name is required').optional(),
     phone: z.string().optional(),
     address: z.string().optional(),
-    emergencyContact: z.string().optional(),
   }),
 });

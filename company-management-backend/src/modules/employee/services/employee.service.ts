@@ -73,6 +73,23 @@ export const getEmployeeProfile = async (employeeId: string) => {
   return employeeWithoutPassword;
 };
 
+export const findAllEmployees = async () => {
+  const employees = await prisma.employee.findMany({
+    // Using 'select' to explicitly exclude the password field for security
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      createdAt: true,
+      updatedAt: true,
+      profile: true, // Include the employee's profile information
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+  return employees;
+};
 /**
  * @async
  * @function updateEmployeeProfile
@@ -83,10 +100,34 @@ export const getEmployeeProfile = async (employeeId: string) => {
  */
 export const updateEmployeeProfile = async (
   employeeId: string,
-  data: Prisma.ProfileUpdateInput,
+  data: {
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    address?: string;
+  },
 ) => {
-  return prisma.profile.update({
-    where: { employeeId: employeeId },
-    data,
+  return prisma.employee.update({
+    where: { id: employeeId },
+    data: {
+      profile: {
+        // Use `upsert` instead of `update`
+        upsert: {
+          // 'create' is used if no profile exists for this employee
+          create: {
+            firstName: data.firstName || '', // Provide required fields
+            lastName: data.lastName || '',
+            dateOfJoining: new Date(), // Provide a default for required fields
+            phone: data.phone,
+            address: data.address,
+          },
+          // 'update' is used if a profile already exists
+          update: data,
+        },
+      },
+    },
+    include: {
+      profile: true,
+    },
   });
 };

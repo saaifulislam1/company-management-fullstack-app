@@ -6,6 +6,7 @@ import {
   registerEmployee,
   getEmployeeProfile,
   updateEmployeeProfile,
+  findAllEmployees,
 } from '../services/employee.service';
 
 export const register = asyncHandler(
@@ -33,7 +34,8 @@ export const getMe = asyncHandler(async (req: AuthRequest, res: Response) => {
 export const updateMe = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     const employeeId = req.employee!.id;
-    const updatedProfile = await updateEmployeeProfile(employeeId, req.body);
+    const updateData = req.body;
+    const updatedProfile = await updateEmployeeProfile(employeeId, updateData);
     res
       .status(200)
       .json(
@@ -41,3 +43,12 @@ export const updateMe = asyncHandler(
       );
   },
 );
+
+export const getAllEmployees = asyncHandler(async (_req, res) => {
+  const employees = await findAllEmployees();
+  res
+    .status(200)
+    .json(
+      new ApiResponse(200, employees, 'All employees fetched successfully'),
+    );
+});
