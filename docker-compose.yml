@@ -1,0 +1,67 @@
+version: "3.8"
+
+services:
+  # The Backend Service
+  backend:
+    build:
+      context: ./company-management-backend # Path to backend Dockerfile
+    container_name: cms-backend
+    ports:
+      - "8000:8000" # Map host port 8000 to container port 8000
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+    # This command ensures the backend waits for the DB to be ready
+    # and runs migrations before starting.
+    command: sh -c "npx prisma migrate deploy && npm start"
+    depends_on:
+      db:
+        condition: service_healthy
+  prisma-studio:
+    build:
+      context: ./company-management-backend
+    container_name: cms-prisma-studio
+    ports:
+      - "5556:5555" # Expose Prisma Studio on port 5555
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    command: ["npx", "prisma", "studio"]
+    depends_on:
+      db:
+        condition: service_healthy
+  # --- END NEW SERVICE ---
+  # The Frontend Service
+  frontend:
+    platform: linux/amd64
+    build:
+      context: ./company-management-frontend # Path to frontend Dockerfile
+      args:
+        # Pass the backend API URL to the frontend build
+        NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+    container_name: cms-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  # The Database Service
+  db:
+    image: postgres:15-alpine
+    container_name: cms-database
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

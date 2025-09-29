@@ -8,10 +8,9 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-
-    "baseUrl": "src", // 👈 IMPORTANT: should be "src" not "."
+    "baseUrl": "./src", // Correctly points to source code
     "paths": {
-      "@/*": ["*"] // 👈 no extra "src"
+      "@/*": ["*"]
     }
   },
   "include": ["src/**/*"],
