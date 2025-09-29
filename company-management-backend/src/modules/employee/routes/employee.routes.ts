@@ -13,6 +13,8 @@ import {
   getAllEmployees,
   getEmployeeByIdController,
   getEmployeeAnalyticsController,
+  getFullEmployeeDetailsController,
+  getEmployeeAttendanceAnalyticsController,
 } from '../controllers/employee.controller';
 
 const router = Router();
@@ -30,6 +32,7 @@ router.post(
   validate(registerEmployeeSchema),
   register,
 );
+router.get('/', protect, authorize('ADMIN', 'HR'), getAllEmployees);
 
 // We can chain routes for the same path ('/me')
 router
@@ -38,7 +41,7 @@ router
   .get(protect, getMe) // Any logged-in user can access this.
   // PATCH /api/v1/employees/me
   .patch(protect, validate(updateProfileSchema), updateMe); // Any logged-in user can access this.
-router.get('/', protect, authorize('ADMIN', 'HR'), getAllEmployees);
+
 router.get(
   '/:id',
   protect,
@@ -47,9 +50,22 @@ router.get(
 );
 
 router.get(
+  '/:id/details',
+  protect,
+  authorize('ADMIN', 'HR'),
+  getFullEmployeeDetailsController,
+);
+
+router.get(
   '/:id/analytics',
   protect,
   authorize('ADMIN', 'HR'),
   getEmployeeAnalyticsController,
+);
+router.get(
+  '/:id/attendance-analytics',
+  protect,
+  authorize('ADMIN', 'HR'),
+  getEmployeeAttendanceAnalyticsController,
 );
 export default router;

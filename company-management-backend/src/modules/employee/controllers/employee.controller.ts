@@ -9,6 +9,8 @@ import {
   findAllEmployees,
   findEmployeeById,
   getEmployeeAnalytics,
+  getFullEmployeeDetails,
+  getEmployeeAttendanceAnalytics,
 } from '../services/employee.service';
 
 export const register = asyncHandler(
@@ -83,3 +85,23 @@ export const getEmployeeAnalyticsController = asyncHandler(async (req, res) => {
       ),
     );
 });
+
+export const getFullEmployeeDetailsController = asyncHandler(
+  async (req, res) => {
+    const { id } = req.params;
+    const details = await getFullEmployeeDetails(id);
+    res
+      .status(200)
+      .json(new ApiResponse(200, details, 'Full employee details fetched'));
+  },
+);
+
+export const getEmployeeAttendanceAnalyticsController = asyncHandler(
+  async (req, res) => {
+    const { id } = req.params;
+    const analytics = await getEmployeeAttendanceAnalytics(id);
+    res
+      .status(200)
+      .json(new ApiResponse(200, analytics, 'Attendance analytics fetched'));
+  },
+);

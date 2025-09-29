@@ -36,3 +36,14 @@ export const getEmployeeAnalytics = async (employeeId: string) => {
   const response = await api.get(`/employees/${employeeId}/analytics`);
   return response.data.data;
 };
+
+export const getFullEmployeeDetails = async (employeeId: string) => {
+  const response = await api.get(`/employees/${employeeId}/details`);
+  return response.data.data;
+};
+export const getEmployeeAttendanceAnalytics = async (employeeId: string) => {
+  const response = await api.get(
+    `/employees/${employeeId}/attendance-analytics`
+  );
+  return response.data.data;
+};

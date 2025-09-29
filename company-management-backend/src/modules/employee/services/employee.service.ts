@@ -2,7 +2,9 @@ import { prisma } from '@/prisma/client';
 import { ApiError } from '@/utils/apiError';
 import { hashPassword } from '@/utils/password';
 import { Prisma, Profile } from '@prisma/client';
-import { startOfMonth, endOfMonth } from 'date-fns';
+import { startOfMonth, endOfMonth, startOfDay, endOfDay } from 'date-fns';
+import { formatDuration } from '@/utils/formatDuration';
+import { getYear, getMonth, getWeek, format } from 'date-fns';
 
 /**
  * @async
@@ -197,5 +199,105 @@ export const getEmployeeAnalytics = async (employeeId: string) => {
       averageWorkHours: parseFloat(averageWorkHours.toFixed(2)),
       lateCheckIns,
     },
+  };
+};
+
+export const getFullEmployeeDetails = async (employeeId: string) => {
+  // 1. Fetch the employee's base profile
+  const employee = await prisma.employee.findUnique({
+    where: { id: employeeId },
+    include: { profile: true },
+  });
+
+  if (!employee) {
+    throw new ApiError(404, 'Employee not found');
+  }
+
+  // 2. Fetch all leave records
+  const leaveHistory = await prisma.leave.findMany({
+    where: { employeeId },
+    orderBy: { startDate: 'desc' },
+  });
+
+  // 3. Fetch today's attendance and calculate total work time
+  const today = new Date();
+  const todaysAttendance = await prisma.attendance.findMany({
+    where: {
+      employeeId,
+      checkIn: {
+        gte: startOfDay(today),
+        lte: endOfDay(today),
+      },
+    },
+    orderBy: { checkIn: 'asc' },
+  });
+
+  const totalHoursToday = todaysAttendance.reduce(
+    (sum, record) => sum + (record.workingHours || 0),
+    0,
+  );
+
+  // 4. Structure and return all the data
+  const { password, ...employeeWithoutPassword } = employee;
+  return {
+    ...employeeWithoutPassword,
+    leaveHistory,
+    todaysAttendance: {
+      records: todaysAttendance,
+      totalHours: formatDuration(totalHoursToday), // <-- Use our formatter
+    },
+  };
+};
+export const getEmployeeAttendanceAnalytics = async (employeeId: string) => {
+  const allAttendance = await prisma.attendance.findMany({
+    where: { employeeId, workingHours: { not: null } },
+    orderBy: { checkIn: 'desc' },
+  });
+
+  // Group data by year, month, and week
+  const analytics = allAttendance.reduce(
+    (acc, record) => {
+      const year = getYear(record.checkIn);
+      const month = getMonth(record.checkIn); // 0-11
+      const week = getWeek(record.checkIn);
+      const day = format(record.checkIn, 'yyyy-MM-dd');
+
+      // Yearly
+      acc.byYear[year] = (acc.byYear[year] || 0) + (record.workingHours || 0);
+
+      // Monthly
+      const monthKey = `${year}-${month}`;
+      acc.byMonth[monthKey] =
+        (acc.byMonth[monthKey] || 0) + (record.workingHours || 0);
+
+      // Weekly
+      const weekKey = `${year}-${week}`;
+      acc.byWeek[weekKey] =
+        (acc.byWeek[weekKey] || 0) + (record.workingHours || 0);
+
+      // Daily
+      acc.byDay[day] = (acc.byDay[day] || 0) + (record.workingHours || 0);
+
+      return acc;
+    },
+    { byYear: {}, byMonth: {}, byWeek: {}, byDay: {} } as any,
+  );
+
+  // Format monthly data for charts
+  const monthlyChartData = Object.entries(analytics.byMonth)
+    .map(([key, hours]) => {
+      const [year, month] = key.split('-');
+      return {
+        name: format(new Date(Number(year), Number(month)), 'MMM yy'),
+        hours: parseFloat((hours as number).toFixed(2)),
+      };
+    })
+    .reverse(); // Reverse to show most recent months first
+
+  return {
+    allRecords: allAttendance,
+    dailySummary: analytics.byDay,
+    weeklySummary: analytics.byWeek,
+    monthlyChartData,
   };
 };
