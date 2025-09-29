@@ -7,6 +7,7 @@ import {
   ClipboardList,
   CalendarCheck2,
   ShieldCheck,
+  Users,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils"; // A helper for conditional class names from shadcn
@@ -32,6 +33,13 @@ export function Sidebar() {
     },
     { href: "/leave", label: "Leave", icon: CalendarCheck2, adminOnly: false },
     // --- NEW: Admin-only link ---
+
+    {
+      href: "/employees",
+      label: "All Employees",
+      icon: Users,
+      adminOnly: true,
+    }, // <-- Add this line
     {
       href: "/manage-leave",
       label: "Manage Leave",
