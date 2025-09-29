@@ -42,6 +42,16 @@ const formSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
   lastName: z.string().min(1, { message: "Last name is required." }),
   role: z.enum(["EMPLOYEE", "HR", "ADMIN"]),
+  department: z.enum([
+    "HR",
+    "SOFTWARE",
+    "ACCOUNTING",
+    "INTERN",
+    "ADMIN",
+    "ENGINEERING",
+    "MARKETING",
+    "SALES",
+  ]),
   dateOfJoining: z.date(),
 });
 
@@ -56,7 +66,7 @@ export function RegisterEmployeeForm({
 }: RegisterEmployeeFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { role: "EMPLOYEE" },
+    defaultValues: { role: "EMPLOYEE", department: "SOFTWARE" },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -150,6 +160,36 @@ export function RegisterEmployeeForm({
                     <SelectItem value="EMPLOYEE">Employee</SelectItem>
                     <SelectItem value="HR">HR</SelectItem>
                     <SelectItem value="ADMIN">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="department"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Department</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a department" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="SOFTWARE">Software</SelectItem>
+                    <SelectItem value="HR">HR</SelectItem>
+                    <SelectItem value="ACCOUNTING">Accounting</SelectItem>
+                    <SelectItem value="INTERN">Intern</SelectItem>
+                    <SelectItem value="ADMIN">Admin</SelectItem>
+                    <SelectItem value="ENGINEERING">Engineering</SelectItem>
+                    <SelectItem value="MARKETING">Marketing</SelectItem>
+                    <SelectItem value="SALES">Sales</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />

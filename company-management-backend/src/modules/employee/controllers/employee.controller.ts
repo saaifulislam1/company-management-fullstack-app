@@ -8,6 +8,7 @@ import {
   updateEmployeeProfile,
   findAllEmployees,
   findEmployeeById,
+  getEmployeeAnalytics,
 } from '../services/employee.service';
 
 export const register = asyncHandler(
@@ -68,3 +69,17 @@ export const getEmployeeByIdController = asyncHandler(
       );
   },
 );
+
+export const getEmployeeAnalyticsController = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const analytics = await getEmployeeAnalytics(id);
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        analytics,
+        'Employee analytics fetched successfully',
+      ),
+    );
+});

@@ -32,3 +32,7 @@ export const registerEmployee = async (data: RegistrationData) => {
   const response = await api.post("/employees/register", data);
   return response.data.data;
 };
+export const getEmployeeAnalytics = async (employeeId: string) => {
+  const response = await api.get(`/employees/${employeeId}/analytics`);
+  return response.data.data;
+};

@@ -4,6 +4,9 @@ CREATE TYPE "public"."UserRole" AS ENUM ('EMPLOYEE', 'HR', 'ADMIN');
 -- CreateEnum
 CREATE TYPE "public"."LeaveStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
 
+-- CreateEnum
+CREATE TYPE "public"."Department" AS ENUM ('HR', 'SOFTWARE', 'ACCOUNTING', 'INTERN', 'ADMIN', 'ENGINEERING', 'MARKETING', 'SALES');
+
 -- CreateTable
 CREATE TABLE "public"."Employee" (
     "id" TEXT NOT NULL,
@@ -26,17 +29,10 @@ CREATE TABLE "public"."Profile" (
     "emergencyContact" TEXT,
     "dateOfJoining" TIMESTAMP(3) NOT NULL,
     "employeeId" TEXT NOT NULL,
+    "department" "public"."Department" NOT NULL DEFAULT 'SOFTWARE',
     "departmentId" TEXT,
 
     CONSTRAINT "Profile_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."Department" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-
-    CONSTRAINT "Department_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -72,14 +68,8 @@ CREATE UNIQUE INDEX "Employee_email_key" ON "public"."Employee"("email");
 -- CreateIndex
 CREATE UNIQUE INDEX "Profile_employeeId_key" ON "public"."Profile"("employeeId");
 
--- CreateIndex
-CREATE UNIQUE INDEX "Department_name_key" ON "public"."Department"("name");
-
 -- AddForeignKey
 ALTER TABLE "public"."Profile" ADD CONSTRAINT "Profile_employeeId_fkey" FOREIGN KEY ("employeeId") REFERENCES "public"."Employee"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."Profile" ADD CONSTRAINT "Profile_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "public"."Department"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."Attendance" ADD CONSTRAINT "Attendance_employeeId_fkey" FOREIGN KEY ("employeeId") REFERENCES "public"."Employee"("id") ON DELETE CASCADE ON UPDATE CASCADE;

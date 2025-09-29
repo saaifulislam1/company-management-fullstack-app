@@ -2,6 +2,7 @@ import { prisma } from '@/prisma/client';
 import { ApiError } from '@/utils/apiError';
 import { hashPassword } from '@/utils/password';
 import { Prisma, Profile } from '@prisma/client';
+import { startOfMonth, endOfMonth } from 'date-fns';
 
 /**
  * @async
@@ -38,6 +39,7 @@ export const registerEmployee = async (data: any) => {
         firstName: data.firstName,
         lastName: data.lastName,
         dateOfJoining: data.dateOfJoining,
+        department: data.department,
         employeeId: employee.id, // Link the profile to the new employee
       },
     });
@@ -150,4 +152,50 @@ export const findEmployeeById = async (employeeId: string) => {
   }
 
   return employee;
+};
+
+export const getEmployeeAnalytics = async (employeeId: string) => {
+  const now = new Date();
+  const startOfCurrentMonth = startOfMonth(now);
+  const endOfCurrentMonth = endOfMonth(now);
+
+  // 1. Fetch all attendance records for the employee for the current month
+  const monthlyAttendance = await prisma.attendance.findMany({
+    where: {
+      employeeId,
+      checkIn: {
+        gte: startOfCurrentMonth,
+        lte: endOfCurrentMonth,
+      },
+      workingHours: { not: null }, // Only consider completed days
+    },
+    orderBy: { checkIn: 'desc' },
+  });
+
+  // 2. Perform calculations
+  const totalDaysWorked = monthlyAttendance.length;
+  const totalHoursWorked = monthlyAttendance.reduce(
+    (sum, record) => sum + (record.workingHours || 0),
+    0,
+  );
+  const averageWorkHours =
+    totalDaysWorked > 0 ? totalHoursWorked / totalDaysWorked : 0;
+
+  // Define "late" as checking in after 10:00 AM local time
+  const lateCheckInTime = 10;
+  const lateCheckIns = monthlyAttendance.filter((record) => {
+    const checkInHour = record.checkIn.getHours(); // Note: This uses server's local time
+    return checkInHour >= lateCheckInTime;
+  }).length;
+
+  // 3. Return a structured analytics object
+  return {
+    monthlyAttendance, // The raw data for a detailed view
+    stats: {
+      totalDaysWorked,
+      totalHoursWorked: parseFloat(totalHoursWorked.toFixed(2)),
+      averageWorkHours: parseFloat(averageWorkHours.toFixed(2)),
+      lateCheckIns,
+    },
+  };
 };

@@ -12,6 +12,7 @@ import {
   updateMe,
   getAllEmployees,
   getEmployeeByIdController,
+  getEmployeeAnalyticsController,
 } from '../controllers/employee.controller';
 
 const router = Router();
@@ -43,5 +44,12 @@ router.get(
   protect,
   authorize('ADMIN', 'HR'),
   getEmployeeByIdController,
+);
+
+router.get(
+  '/:id/analytics',
+  protect,
+  authorize('ADMIN', 'HR'),
+  getEmployeeAnalyticsController,
 );
 export default router;

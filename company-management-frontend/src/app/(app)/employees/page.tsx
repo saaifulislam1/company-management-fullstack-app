@@ -24,6 +24,7 @@ import {
 import { getAllEmployees } from "@/services/employeeService";
 import { RegisterEmployeeForm } from "@/components/shared/RegisterEmployeeForm";
 import { PlusCircle } from "lucide-react";
+import Link from "next/link";
 
 // Define the shape of the employee data we expect
 interface EmployeeData {
@@ -105,9 +106,14 @@ export default function AllEmployeesPage() {
                 employees.map((employee) => (
                   <TableRow key={employee.id}>
                     <TableCell className="font-medium">
-                      {employee.profile
-                        ? `${employee.profile.firstName} ${employee.profile.lastName}`
-                        : "N/A"}
+                      <Link
+                        href={`/employees/${employee.id}`} // <-- Use the employee's ID
+                        className="hover:underline text-blue-600 dark:text-blue-400"
+                      >
+                        {employee.profile
+                          ? `${employee.profile.firstName} ${employee.profile.lastName}`
+                          : "N/A"}
+                      </Link>
                     </TableCell>
                     <TableCell>{employee.email}</TableCell>
                     <TableCell>{employee.role}</TableCell>
