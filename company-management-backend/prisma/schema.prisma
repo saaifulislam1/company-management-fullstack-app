@@ -58,14 +58,19 @@ model Profile {
   employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   employeeId String   @unique // The foreign key, must be unique
 
-  department   Department? @relation(fields: [departmentId], references: [id])
+  department       Department  @default(SOFTWARE) // We'll set a default
   departmentId String?
 }
 
-model Department {
-  id        String    @id @default(cuid())
-  name      String    @unique
-  employees Profile[] // A department can have many employee profiles
+enum Department {
+  HR
+  SOFTWARE
+  ACCOUNTING
+  INTERN
+  ADMIN
+  ENGINEERING
+  MARKETING
+  SALES
 }
 
 model Attendance {
