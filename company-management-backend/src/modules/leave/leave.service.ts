@@ -43,10 +43,18 @@ export const applyForLeave = async (employeeId: string, data: any) => {
   // 4. Create the leave request (status is PENDING by default)
   return prisma.leave.create({
     data: {
-      ...data,
+      leaveType: data.leaveType,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      reason: data.reason,
       employeeId: employee.id,
-      // Assign it to the employee's manager for approval
       approvedById: employee.managerId,
+
+      // --- THIS IS THE FIX ---
+      // Explicitly set the initial status for the new workflow
+      managerStatus: 'PENDING',
+      adminStatus: null, // Admin status starts as null
+      // --- END FIX ---
     },
   });
 };
@@ -58,45 +66,25 @@ export const getLeaveHistory = async (employeeId: string) => {
 };
 
 // Admin/HR function
-export const getAllLeaveRequests = async () => {
-  return prisma.leave.findMany({
-    orderBy: { createdAt: 'desc' },
-    include: {
-      employee: {
-        include: {
-          profile: true,
-        },
-      },
-    },
-  });
-};
-
-// Admin/HR function
-export const updateLeaveStatus = async (
-  leaveId: string,
-  status: LeaveStatus,
-) => {
-  const leave = await prisma.leave.findUnique({ where: { id: leaveId } });
-  if (!leave) {
-    throw new ApiError(404, 'Leave request not found');
-  }
-  return prisma.leave.update({
-    where: { id: leaveId },
-    data: { status },
-  });
-};
+// export const updateLeaveStatus = async (
+//   leaveId: string,
+//   status: LeaveStatus,
+// ) => {
+//   const leave = await prisma.leave.findUnique({ where: { id: leaveId } });
+//   if (!leave) {
+//     throw new ApiError(404, 'Leave request not found');
+//   }
+//   return prisma.leave.update({
+//     where: { id: leaveId },
+//     data: { status },
+//   });
+// };
 
 export const getTeamLeaveRequests = async (managerId: string) => {
   return prisma.leave.findMany({
-    where: {
-      employee: {
-        managerId: managerId,
-      },
-      status: 'PENDING',
-    },
-    include: {
-      employee: { include: { profile: true } },
-    },
+    where: { employee: { managerId: managerId } }, // No longer filtering by PENDING
+    include: { employee: { include: { profile: true } } },
+    orderBy: { createdAt: 'desc' },
   });
 };
 
@@ -104,37 +92,47 @@ export const getTeamLeaveRequests = async (managerId: string) => {
 export const managerUpdateLeaveStatus = async (
   leaveId: string,
   managerId: string,
-  status: 'APPROVED' | 'REJECTED',
+  status: LeaveStatus,
 ) => {
   const leave = await prisma.leave.findUnique({ where: { id: leaveId } });
-
-  // Security check: ensure the leave request belongs to the manager's subordinate
   if (!leave || leave.approvedById !== managerId) {
     throw new ApiError(403, 'You are not authorized to update this request.');
   }
+  return prisma.leave.update({
+    where: { id: leaveId },
+    data: { managerStatus: status },
+  });
+};
+export const getAllLeaveRequests = async () => {
+  return prisma.leave.findMany({
+    where: { managerStatus: 'APPROVED' }, // Admins only see manager-approved requests
+    include: { employee: { include: { profile: true } } },
+    orderBy: { createdAt: 'desc' },
+  });
+};
 
+// Admin's service: Updates the FINAL adminStatus and deducts leave
+export const adminUpdateLeaveStatus = async (
+  leaveId: string,
+  status: LeaveStatus,
+) => {
   const updatedLeave = await prisma.leave.update({
     where: { id: leaveId },
-    data: { status },
+    data: { adminStatus: status },
   });
 
-  // If approved, deduct from the balance
+  // Deduct balance ONLY on final admin approval
   if (status === 'APPROVED') {
     const leaveDuration =
       differenceInBusinessDays(updatedLeave.endDate, updatedLeave.startDate) +
       1;
     const balanceField =
-      updatedLeave.leaveType === 'VACATION'
+      updatedLeave.leaveType.toUpperCase() === 'VACATION'
         ? 'vacationBalance'
         : 'sickLeaveBalance';
-
     await prisma.profile.update({
       where: { employeeId: updatedLeave.employeeId },
-      data: {
-        [balanceField]: {
-          decrement: leaveDuration,
-        },
-      },
+      data: { [balanceField]: { decrement: leaveDuration } },
     });
   }
 

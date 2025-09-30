@@ -22,6 +22,7 @@ export const getHistoryController = asyncHandler(
   },
 );
 
+// For Admins to get requests approved by managers
 export const getAllRequestsController = asyncHandler(
   async (_req: AuthRequest, res: Response) => {
     const requests = await leaveService.getAllLeaveRequests();
@@ -31,24 +32,10 @@ export const getAllRequestsController = asyncHandler(
   },
 );
 
-export const updateStatusController = asyncHandler(
-  async (req: AuthRequest, res: Response) => {
-    const { leaveId } = req.params;
-    const { status } = req.body;
-    const updatedRequest = await leaveService.updateLeaveStatus(
-      leaveId,
-      status,
-    );
-    res
-      .status(200)
-      .json(new ApiResponse(200, updatedRequest, 'Leave status updated'));
-  },
-);
-
+// For Managers to get requests from their team
 export const getTeamRequestsController = asyncHandler(
-  // 2. Use AuthRequest to type the 'req' parameter
   async (req: AuthRequest, res: Response) => {
-    const managerId = req.employee!.id; // <-- This will now work without error
+    const managerId = req.employee!.id;
     const requests = await leaveService.getTeamLeaveRequests(managerId);
     res
       .status(200)
@@ -56,26 +43,38 @@ export const getTeamRequestsController = asyncHandler(
   },
 );
 
+// For Managers to update their team's requests
 export const managerUpdateStatusController = asyncHandler(
   async (req: AuthRequest, res: Response) => {
-    // 1. Get the manager's ID from the authenticated request.
     const managerId = req.employee!.id;
-    // 2. Get the leaveId from the URL parameters.
     const { leaveId } = req.params;
-    // 3. Get the new status from the request body.
     const { status } = req.body;
-
-    // 4. Call the service with ALL THREE arguments.
     const updatedRequest = await leaveService.managerUpdateLeaveStatus(
       leaveId,
       managerId,
       status,
     );
-
     res
       .status(200)
       .json(
         new ApiResponse(200, updatedRequest, 'Leave status updated by manager'),
+      );
+  },
+);
+
+// For Admins to make the final update
+export const adminUpdateStatusController = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    const { leaveId } = req.params;
+    const { status } = req.body;
+    const updatedRequest = await leaveService.adminUpdateLeaveStatus(
+      leaveId,
+      status,
+    );
+    res
+      .status(200)
+      .json(
+        new ApiResponse(200, updatedRequest, 'Leave status updated by admin'),
       );
   },
 );

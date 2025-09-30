@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { format, parseISO } from "date-fns";
-import toast from "react-hot-toast"; // <-- 1. Import from react-hot-toast
+import toast from "react-hot-toast";
+import Link from "next/link";
+
+// UI Components
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -21,12 +24,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import { Info } from "lucide-react";
+
+// Services and Types
+import {
   getAllLeaveRequests,
-  updateLeaveStatus,
+  adminUpdateLeaveStatus,
   LeaveRecord,
   LeaveRecordWithEmployee,
 } from "@/services/leaveService";
-import Link from "next/link";
+
+type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED";
 
 export default function ManageLeavePage() {
   const [requests, setRequests] = useState<LeaveRecordWithEmployee[]>([]);
@@ -35,10 +47,10 @@ export default function ManageLeavePage() {
   const fetchAllRequests = async () => {
     try {
       setIsLoading(true);
+      // Fetches only requests approved by managers
       const data = await getAllLeaveRequests();
       setRequests(data);
     } catch (error) {
-      // 2. Use react-hot-toast for errors
       toast.error("Failed to fetch leave requests.");
     } finally {
       setIsLoading(false);
@@ -49,22 +61,22 @@ export default function ManageLeavePage() {
     fetchAllRequests();
   }, []);
 
-  const handleStatusChange = async (
-    leaveId: string,
-    status: "APPROVED" | "PENDING" | "REJECTED"
-  ) => {
-    try {
-      await updateLeaveStatus(leaveId, status);
-      // 3. Use react-hot-toast for success
-      toast.success(`Request status has been updated.`);
+  // Use toast.promise for better feedback during the API call
+  const handleStatusChange = (leaveId: string, status: LeaveStatus) => {
+    const promise = adminUpdateLeaveStatus(leaveId, status).then(() => {
+      // Refresh data on success
       fetchAllRequests();
-    } catch (error) {
-      // 4. Use react-hot-toast for update errors
-      toast.error("Failed to update the request.");
-    }
+    });
+
+    toast.promise(promise, {
+      loading: "Updating status...",
+      success: "Status updated successfully!",
+      error: "Failed to update status.",
+    });
   };
 
-  const getStatusBadgeVariant = (status: LeaveRecord["status"]) => {
+  const getStatusBadgeVariant = (status: LeaveStatus | null) => {
+    if (!status) return "secondary";
     switch (status) {
       case "APPROVED":
         return "default";
@@ -82,32 +94,33 @@ export default function ManageLeavePage() {
       <h1 className="text-3xl font-bold">Manage Leave Requests</h1>
       <Card>
         <CardHeader>
-          <CardTitle>All Submitted Requests</CardTitle>
+          <CardTitle>Manager-Approved Leave Requests</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Employee</TableHead>
-                <TableHead>Type</TableHead>
                 <TableHead>Dates</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-center">Change Status</TableHead>
+                <TableHead>Reason</TableHead>
+                <TableHead>Managers Decision</TableHead>
+                <TableHead>Final Status</TableHead>
+                <TableHead className="text-left">Your Final Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
+                  <TableCell colSpan={6} className="h-24 text-center">
                     Loading requests...
                   </TableCell>
                 </TableRow>
-              ) : (
+              ) : requests.length > 0 ? (
                 requests.map((req) => (
                   <TableRow key={req.id}>
                     <TableCell className="font-medium">
                       <Link
-                        href={`/employees/${req.employeeId}`} // <-- Use the employeeId from the record
+                        href={`/employees/${req.employeeId}`}
                         className="hover:underline"
                       >
                         {req.employee.profile
@@ -115,37 +128,58 @@ export default function ManageLeavePage() {
                           : "N/A"}
                       </Link>
                     </TableCell>
-                    <TableCell>{req.leaveType}</TableCell>
                     <TableCell>
                       {format(parseISO(req.startDate), "dd MMM")} -{" "}
                       {format(parseISO(req.endDate), "dd MMM, yyyy")}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={getStatusBadgeVariant(req.status)}>
-                        {req.status}
+                      <HoverCard>
+                        <HoverCardTrigger asChild>
+                          <Info className="h-5 w-5 cursor-pointer text-muted-foreground hover:text-foreground" />
+                        </HoverCardTrigger>
+                        <HoverCardContent className="w-80">
+                          <p className="text-sm font-semibold">
+                            Reason for Leave:
+                          </p>
+                          <p className="text-sm">{req.reason}</p>
+                        </HoverCardContent>
+                      </HoverCard>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusBadgeVariant(req.managerStatus)}>
+                        {req.managerStatus}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusBadgeVariant(req.adminStatus)}>
+                        {req.adminStatus || "Awaiting"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <Select
-                        defaultValue={req.status}
-                        onValueChange={(
-                          newStatus: "APPROVED" | "PENDING" | "REJECTED"
-                        ) => {
+                        defaultValue={req.adminStatus || "PENDING"}
+                        onValueChange={(newStatus: LeaveStatus) => {
                           handleStatusChange(req.id, newStatus);
                         }}
                       >
-                        <SelectTrigger className="w-[120px]">
+                        <SelectTrigger className="w-[120px] ">
                           <SelectValue placeholder="Set status" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="PENDING">Pending</SelectItem>
-                          <SelectItem value="APPROVED">Approved</SelectItem>
-                          <SelectItem value="REJECTED">Rejected</SelectItem>
+                          <SelectItem value="PENDING">Awaiting</SelectItem>
+                          <SelectItem value="APPROVED">Approve</SelectItem>
+                          <SelectItem value="REJECTED">Reject</SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>
                   </TableRow>
                 ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center">
+                    No manager-approved requests to show.
+                  </TableCell>
+                </TableRow>
               )}
             </TableBody>
           </Table>

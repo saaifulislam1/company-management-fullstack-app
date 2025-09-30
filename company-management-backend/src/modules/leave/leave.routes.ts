@@ -36,7 +36,7 @@ router.patch(
   '/requests/:leaveId',
   authorize('ADMIN', 'HR'),
   validate(validator.updateLeaveStatusSchema),
-  controller.updateStatusController,
+  controller.adminUpdateStatusController,
 );
 
 export default router;

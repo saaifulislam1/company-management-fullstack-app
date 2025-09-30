@@ -22,23 +22,42 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import { Info } from "lucide-react";
 
 // Services and Types
 import {
   getTeamLeaveRequests,
   managerUpdateLeaveStatus,
-  LeaveRecord,
   LeaveRecordWithEmployee,
 } from "@/services/leaveService";
+
+// --- TYPE DEFINITIONS ---
+// These types must match the data structure from your backend service.
+type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+interface LeaveRecord {
+  id: string;
+  leaveType: string;
+  startDate: string;
+  endDate: string;
+  reason: string;
+  managerStatus: LeaveStatus;
+  adminStatus: LeaveStatus | null; // Admin status can be null
+}
 
 export default function TeamRequestsPage() {
   const [requests, setRequests] = useState<LeaveRecordWithEmployee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Fetches all leave requests for the manager's team
   const fetchTeamRequests = async () => {
     try {
       setIsLoading(true);
-      // Fetches only the requests for the manager's team
       const data = await getTeamLeaveRequests();
       setRequests(data);
     } catch (error) {
@@ -52,10 +71,8 @@ export default function TeamRequestsPage() {
     fetchTeamRequests();
   }, []);
 
-  const handleStatusChange = async (
-    leaveId: string,
-    status: "APPROVED" | "REJECTED"
-  ) => {
+  // Handles the manager's decision to update the status
+  const handleStatusChange = async (leaveId: string, status: LeaveStatus) => {
     try {
       await managerUpdateLeaveStatus(leaveId, status);
       toast.success(`Request status has been updated.`);
@@ -66,7 +83,9 @@ export default function TeamRequestsPage() {
     }
   };
 
-  const getStatusBadgeVariant = (status: LeaveRecord["status"]) => {
+  // Helper to determine the color of the status badge
+  const getStatusBadgeVariant = (status: LeaveStatus | null) => {
+    if (!status) return "secondary";
     switch (status) {
       case "APPROVED":
         return "default";
@@ -84,42 +103,79 @@ export default function TeamRequestsPage() {
       <h1 className="text-3xl font-bold">Team Leave Requests</h1>
       <Card>
         <CardHeader>
-          <CardTitle>Pending Requests from Your Team</CardTitle>
+          <CardTitle>Leave Requests from Your Team</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Employee</TableHead>
-                <TableHead>Type</TableHead>
                 <TableHead>Dates</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>Reason</TableHead>
+                <TableHead>Manager Status</TableHead>
+                <TableHead>Admin Status</TableHead>
+                <TableHead className="text-left">Your Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">
+                  <TableCell colSpan={6} className="h-24 text-center">
                     Loading requests...
                   </TableCell>
                 </TableRow>
               ) : requests.length > 0 ? (
                 requests.map((req) => (
                   <TableRow key={req.id}>
+                    {/* Employee Name */}
                     <TableCell className="font-medium">
                       {req.employee.profile
                         ? `${req.employee.profile.firstName} ${req.employee.profile.lastName}`
                         : "N/A"}
                     </TableCell>
-                    <TableCell>{req.leaveType}</TableCell>
+
+                    {/* Dates */}
                     <TableCell>
                       {format(parseISO(req.startDate), "dd MMM")} -{" "}
                       {format(parseISO(req.endDate), "dd MMM, yyyy")}
                     </TableCell>
+
+                    {/* Reason (via HoverCard) */}
+                    <TableCell>
+                      <HoverCard>
+                        <HoverCardTrigger asChild>
+                          <Info className="h-5 w-5 cursor-pointer text-muted-foreground hover:text-foreground" />
+                        </HoverCardTrigger>
+                        <HoverCardContent className="w-80">
+                          <p className="text-sm font-semibold">
+                            Reason for Leave:
+                          </p>
+                          <p className="text-sm">{req.reason}</p>
+                        </HoverCardContent>
+                      </HoverCard>
+                    </TableCell>
+
+                    {/* Manager's current decision */}
+                    <TableCell>
+                      <Badge variant={getStatusBadgeVariant(req.managerStatus)}>
+                        {req.managerStatus}
+                      </Badge>
+                    </TableCell>
+
+                    {/* Admin's final decision */}
+                    <TableCell>
+                      <Badge variant={getStatusBadgeVariant(req.adminStatus)}>
+                        {req.adminStatus || "Awaiting"}
+                      </Badge>
+                    </TableCell>
+
+                    {/* Manager's Action Dropdown */}
                     <TableCell className="text-right">
                       <Select
-                        defaultValue={req.status}
-                        onValueChange={(newStatus: "APPROVED" | "REJECTED") => {
+                        defaultValue={req.managerStatus}
+                        // The manager can only act if the admin has not yet made a final decision.
+                        disabled={!!req.adminStatus}
+                        onValueChange={(newStatus: LeaveStatus) => {
                           handleStatusChange(req.id, newStatus);
                         }}
                       >
@@ -128,8 +184,8 @@ export default function TeamRequestsPage() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="PENDING">Pending</SelectItem>
-                          <SelectItem value="APPROVED">Approved</SelectItem>
-                          <SelectItem value="REJECTED">Rejected</SelectItem>
+                          <SelectItem value="APPROVED">Approve</SelectItem>
+                          <SelectItem value="REJECTED">Reject</SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>
@@ -137,8 +193,8 @@ export default function TeamRequestsPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">
-                    No pending requests from your team.
+                  <TableCell colSpan={6} className="h-24 text-center">
+                    No leave requests found from your team.
                   </TableCell>
                 </TableRow>
               )}
