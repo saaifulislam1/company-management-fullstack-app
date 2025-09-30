@@ -5,20 +5,14 @@ import { useParams } from "next/navigation";
 import { format, parseISO } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 import toast from "react-hot-toast";
-
-// in employees/[employeeId]/page.tsx
-
 import { Button } from "@/components/ui/button";
-import { BarChartHorizontalBig, Briefcase, HeartPulse } from "lucide-react";
-
-// UI Components
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+  BarChartHorizontalBig,
+  Briefcase,
+  HeartPulse,
+  UserPlus,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Table,
@@ -29,14 +23,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-
-// Services and Hooks
 import { getFullEmployeeDetails } from "@/services/employeeService";
-
-// Icons
 import { Clock, Phone, Home, AlertTriangle, CalendarDays } from "lucide-react";
 import Link from "next/link";
 import { StatCard } from "@/components/shared/StatCard";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { AssignManagerForm } from "@/components/shared/AssignManagerForm";
 
 // --- TYPE DEFINITIONS ---
 // These interfaces define the exact shape of the data we expect from our API,
@@ -50,6 +48,8 @@ interface Profile {
   emergencyContact: string | null;
   department: string;
   dateOfJoining: string; // ISO String
+  vacationBalance?: string;
+  sickLeaveBalance?: string;
 }
 
 interface LeaveRecord {
@@ -69,13 +69,20 @@ interface AttendanceRecord {
 interface FullEmployeeData {
   id: string;
   email: string;
-  role: "EMPLOYEE" | "HR" | "ADMIN";
+  role: "EMPLOYEE" | "HR" | "ADMIN" | "MANAGER";
   profile: Profile | null;
   leaveHistory: LeaveRecord[];
   todaysAttendance: {
     records: AttendanceRecord[];
     totalHours: string;
   };
+  manager: {
+    id: string;
+    profile: {
+      firstName: string;
+      lastName: string;
+    } | null;
+  } | null;
 }
 
 export default function EmployeeDetailPage() {
@@ -88,28 +95,27 @@ export default function EmployeeDetailPage() {
   const [employeeData, setEmployeeData] = useState<FullEmployeeData | null>(
     null
   );
-  // A state to handle the loading UI
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  const fetchDetails = async () => {
+    if (!employeeId) return; // Don't fetch if there's no ID
+
+    try {
+      setIsLoading(true);
+      // Call our single, comprehensive API endpoint
+      const data = await getFullEmployeeDetails(employeeId);
+      console.log(data, "dattaa");
+      setEmployeeData(data);
+    } catch (error) {
+      toast.error("Failed to fetch employee details.");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   // --- DATA FETCHING ---
   useEffect(() => {
-    // This effect runs when the component mounts or when the employeeId changes.
-    const fetchDetails = async () => {
-      if (!employeeId) return; // Don't fetch if there's no ID
-
-      try {
-        setIsLoading(true);
-        // Call our single, comprehensive API endpoint
-        const data = await getFullEmployeeDetails(employeeId);
-        setEmployeeData(data);
-      } catch (error) {
-        toast.error("Failed to fetch employee details.");
-        console.error(error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchDetails();
   }, [employeeId]);
 
@@ -164,7 +170,7 @@ export default function EmployeeDetailPage() {
   }
 
   // Destructure data for easier access in JSX
-  const { profile, leaveHistory, todaysAttendance } = employeeData;
+  const { profile, leaveHistory, todaysAttendance, manager } = employeeData;
   console.log(todaysAttendance, "tdd");
   const { firstName = "Unknown", lastName = "User" } = profile || {};
   const fallback = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
@@ -192,9 +198,45 @@ export default function EmployeeDetailPage() {
             <Badge variant="secondary">
               Dept: {profile?.department || "N/A"}
             </Badge>
+            <div>
+              <Badge variant="outline">Reporting Manager:</Badge>
+
+              {manager?.profile ? (
+                <Badge variant="secondary">
+                  <Link
+                    href={`/employees/${manager.id}`}
+                    className="font-semibold  hover:underline underline"
+                  >
+                    {manager.profile.firstName} {manager.profile.lastName}
+                  </Link>
+                </Badge>
+              ) : (
+                "N/A"
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline">
+            <UserPlus className="mr-2 h-4 w-4" /> Assign Manager
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign a Manager</DialogTitle>
+          </DialogHeader>
+          <AssignManagerForm
+            employeeId={employeeId}
+            onSuccess={() => {
+              setIsDialogOpen(false);
+              fetchDetails(); // Refetch data to show the new manager
+            }}
+          />
+        </DialogContent>
+      </Dialog>
       <div className="grid gap-6 md:grid-cols-2">
         <StatCard
           title="Total Hours Worked Today"
