@@ -34,15 +34,9 @@ import { Badge } from "@/components/ui/badge";
 import { getFullEmployeeDetails } from "@/services/employeeService";
 
 // Icons
-import {
-  Clock,
-  Briefcase,
-  Phone,
-  Home,
-  AlertTriangle,
-  CalendarDays,
-} from "lucide-react";
+import { Clock, Phone, Home, AlertTriangle, CalendarDays } from "lucide-react";
 import Link from "next/link";
+import { StatCard } from "@/components/shared/StatCard";
 
 // --- TYPE DEFINITIONS ---
 // These interfaces define the exact shape of the data we expect from our API,
@@ -80,7 +74,7 @@ interface FullEmployeeData {
   leaveHistory: LeaveRecord[];
   todaysAttendance: {
     records: AttendanceRecord[];
-    totalHoursFormatted: string;
+    totalHours: string;
   };
 }
 
@@ -171,9 +165,10 @@ export default function EmployeeDetailPage() {
 
   // Destructure data for easier access in JSX
   const { profile, leaveHistory, todaysAttendance } = employeeData;
+  console.log(todaysAttendance, "tdd");
   const { firstName = "Unknown", lastName = "User" } = profile || {};
   const fallback = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
-
+  console.log("timetable", todaysAttendance.totalHours);
   return (
     <div className="space-y-8">
       {/* 1. Header Section: Displays the employee's name, avatar, and core info. */}
@@ -200,6 +195,14 @@ export default function EmployeeDetailPage() {
           </div>
         </div>
       </div>
+      <div className="grid gap-6 md:grid-cols-2">
+        <StatCard
+          title="Total Hours Worked Today"
+          value={todaysAttendance.totalHours}
+          icon={Clock}
+        />
+        {/* You can add more summary cards here in the future */}
+      </div>
 
       {/* 2. Details Grid: Shows key profile and attendance information at a glance. */}
       <div className="grid gap-6 md:grid-cols-2">
@@ -208,10 +211,6 @@ export default function EmployeeDetailPage() {
             <CardTitle className="flex items-center">
               <Clock className="mr-2 h-5 w-5" /> Todays Attendance
             </CardTitle>
-            <CardDescription>
-              Total duration worked today:{" "}
-              <strong>{todaysAttendance.totalHoursFormatted}</strong>
-            </CardDescription>
           </CardHeader>
           <CardContent>
             {todaysAttendance.records.length > 0 ? (
