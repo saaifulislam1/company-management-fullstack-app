@@ -8,13 +8,17 @@ import {
   getAttendanceHistory,
   AttendanceRecord,
 } from "@/services/attendanceService";
-import { Users, CalendarOff, Briefcase, Clock } from "lucide-react";
+import { Users, CalendarOff, Briefcase, Clock, HeartPulse } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import Link from "next/link";
 import { getAllEmployees } from "@/services/employeeService";
+import { getMyProfile } from "@/services/authService";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [profile, setProfile] = useState<any>(null);
   const [stats, setStats] = useState({
     pendingLeaves: 0,
     latestCheckIn: "N/A",
@@ -28,6 +32,10 @@ export default function DashboardPage() {
       setIsLoading(true);
 
       try {
+        if (user.role === "EMPLOYEE" || user.role === "MANAGER") {
+          const profileData = await getMyProfile();
+          setProfile(profileData.data.profile);
+        }
         // Admin/HR users fetch all pending leave requests
         if (user.role === "ADMIN" || user.role === "HR") {
           const allRequests = await getAllLeaveRequests();
@@ -82,7 +90,33 @@ export default function DashboardPage() {
         value={isLoading ? "..." : stats.latestCheckIn}
         icon={Clock}
       />
-      <DashboardCard title="Leave Balance" value="15 Days" icon={Briefcase} />
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">
+            Vacation Balance
+          </CardTitle>
+          <Briefcase className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">
+            {isLoading ? "..." : `${profile?.vacationBalance || 0} Days`}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">
+            Sick Leave Balance
+          </CardTitle>
+          <HeartPulse className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">
+            {isLoading ? "..." : `${profile?.sickLeaveBalance || 0} Days`}
+          </div>
+        </CardContent>
+      </Card>
       {/* Add more employee-specific cards here */}
     </>
   );

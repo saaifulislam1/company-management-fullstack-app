@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 // in employees/[employeeId]/page.tsx
 
 import { Button } from "@/components/ui/button";
-import { BarChartHorizontalBig } from "lucide-react";
+import { BarChartHorizontalBig, Briefcase, HeartPulse } from "lucide-react";
 
 // UI Components
 import {
@@ -263,6 +263,35 @@ export default function EmployeeDetailPage() {
         </Card>
       </div>
 
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Vacation Balance
+            </CardTitle>
+            <Briefcase className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {profile?.vacationBalance || 0} Days
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Sick Leave Balance
+            </CardTitle>
+            <HeartPulse className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {profile?.sickLeaveBalance || 0} Days
+            </div>
+          </CardContent>
+        </Card>
+      </div>
       {/* 3. Leave History Table: A full log of the employee's leave requests. */}
       <Card>
         <CardHeader>

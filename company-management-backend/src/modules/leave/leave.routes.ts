@@ -24,6 +24,14 @@ router.get(
   authorize('ADMIN', 'HR'),
   controller.getAllRequestsController,
 );
+router.get('/team-requests', protect, controller.getTeamRequestsController);
+router.patch(
+  '/team-requests/:leaveId',
+
+  protect,
+  validate(validator.updateLeaveStatusSchema),
+  controller.managerUpdateStatusController,
+);
 router.patch(
   '/requests/:leaveId',
   authorize('ADMIN', 'HR'),

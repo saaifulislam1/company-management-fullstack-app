@@ -15,6 +15,7 @@ datasource db {
 // Enums define a set of allowed values for a field.
 enum UserRole {
   EMPLOYEE
+  MANAGER
   HR
   ADMIN
 }
@@ -34,7 +35,12 @@ model Employee {
   password    String   // The hashed password
   role        UserRole @default(EMPLOYEE) // The role of the employee, defaults to EMPLOYEE
 
-  // --- Relations ---
+ // --- NEW: Manager-Subordinate Relationship ---
+  // An employee can have one manager
+  manager   Employee? @relation("Subordinates", fields: [managerId], references: [id])
+  managerId String?
+  // An employee can be a manager to many subordinates
+  subordinates Employee[] @relation("Subordinates")
   profile     Profile?     // Each employee has one Profile (optional)
   attendances Attendance[] // Each employee can have many Attendance records
   leaves      Leave[]      // Each employee can have many Leave records
@@ -52,7 +58,8 @@ model Profile {
   address          String?
   emergencyContact String?
   dateOfJoining    DateTime
-
+  vacationBalance   Float @default(20)
+  sickLeaveBalance  Float @default(10)
   // --- Relations ---
   // This defines a one-to-one relationship with the Employee model.
   employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
@@ -92,7 +99,8 @@ model Leave {
   endDate   DateTime
   reason    String
   status    LeaveStatus @default(PENDING) // Status defaults to PENDING
-
+  // The ID of the manager who needs to approve this
+  approvedById String?
   // --- Relations ---
   employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   employeeId String

@@ -46,6 +46,12 @@ export function Sidebar() {
       icon: ShieldCheck,
       adminOnly: true,
     },
+    {
+      href: "/team-requests",
+      label: "Team Requests",
+      icon: Users,
+      adminOnly: true,
+    },
   ];
 
   return (
@@ -57,7 +63,13 @@ export function Sidebar() {
         {navLinks.map((link) => {
           // --- NEW: Conditional rendering logic ---
           // If the link is admin-only and the user is not an admin/hr, skip rendering it.
-          if (link.adminOnly && user?.role !== "ADMIN" && user?.role !== "HR") {
+
+          if (
+            link.adminOnly &&
+            user?.role !== "ADMIN" &&
+            user?.role !== "MANAGER" &&
+            user?.role !== "HR"
+          ) {
             return null;
           }
 

@@ -62,3 +62,20 @@ export const updateLeaveStatus = async (
   const response = await api.patch(`/leave/requests/${leaveId}`, { status });
   return response.data.data;
 };
+
+export const getTeamLeaveRequests = async (): Promise<
+  LeaveRecordWithEmployee[]
+> => {
+  const response = await api.get("/leave/team-requests");
+  return response.data.data;
+};
+
+export const managerUpdateLeaveStatus = async (
+  leaveId: string,
+  status: "APPROVED" | "REJECTED"
+): Promise<LeaveRecord> => {
+  const response = await api.patch(`/leave/team-requests/${leaveId}`, {
+    status,
+  });
+  return response.data.data;
+};

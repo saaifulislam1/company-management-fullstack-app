@@ -9,7 +9,8 @@ import { getMyProfile } from "@/services/authService";
 interface User {
   id: string;
   email: string;
-  role: "EMPLOYEE" | "HR" | "ADMIN";
+  role: "EMPLOYEE" | "HR" | "ADMIN" | "MANAGER";
+  isManager?: boolean;
 }
 
 interface AuthContextType {

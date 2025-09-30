@@ -27,6 +27,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import * as leaveService from "@/services/leaveService";
 import toast from "react-hot-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 // Define the form validation schema using Zod
 const formSchema = z.object({
@@ -70,7 +77,7 @@ export function LeaveApplicationForm({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Leave Type */}
-        <FormField
+        {/* <FormField
           control={form.control}
           name="leaveType"
           render={({ field }) => (
@@ -79,6 +86,28 @@ export function LeaveApplicationForm({
               <FormControl>
                 <Input placeholder="e.g., Vacation, Sick Leave" {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        /> */}
+
+        <FormField
+          control={form.control}
+          name="leaveType"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Leave Type</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a leave type" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="VACATION">Vacation</SelectItem>
+                  <SelectItem value="SICK">Sick Leave</SelectItem>
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
