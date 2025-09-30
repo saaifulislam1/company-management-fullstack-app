@@ -6,13 +6,6 @@ import { startOfMonth, endOfMonth, startOfDay, endOfDay } from 'date-fns';
 import { formatDuration } from '@/utils/formatDuration';
 import { getYear, getMonth, getWeek, format } from 'date-fns';
 
-/**
- * @async
- * @function registerEmployee
- * @description Creates a new employee and their profile in a single transaction.
- * @param {Prisma.EmployeeCreateInput & { profile: Omit<Profile, 'id' | 'employeeId'> }} data
- * @returns {Promise<object>} The newly created employee object without the password.
- */
 export const registerEmployee = async (data: any) => {
   // 1. Check if an employee with this email already exists
   const existingEmployee = await prisma.employee.findUnique({

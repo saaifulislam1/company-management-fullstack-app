@@ -2,7 +2,7 @@ import api from "./api";
 export interface RegistrationData {
   email: string;
   password: string;
-  role: "EMPLOYEE" | "HR" | "ADMIN";
+  role: "EMPLOYEE" | "HR" | "ADMIN" | "MANAGER";
   firstName: string;
   lastName: string;
   dateOfJoining: Date;
