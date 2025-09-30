@@ -57,17 +57,8 @@ export const getPotentialManagers = async () => {
  * @description Assigns a manager to a specific employee.
  */
 export const assignManager = async (employeeId: string, managerId: string) => {
-  // We use the updateMyProfile endpoint, as it's designed to handle this
-  const response = await api.patch(
-    `/employees/me`,
-    { managerId },
-    { params: { id: employeeId } }
-  );
-  // Note: The backend route for updateMe is PATCH /employees/me, but we can target
-  // a different user if we adjust the backend controller. For simplicity, let's
-  // assume the backend updateMe controller is updated to handle an optional ID.
-  // A better approach would be a dedicated PATCH /employees/:id/assign-manager route.
-  // Let's create a more robust update function.
-  const res = await api.patch(`/employees/${employeeId}`, { managerId }); // Assuming a PATCH /employees/:id route
-  return res.data.data;
+  // This is the only line that should be in this function.
+  // It correctly calls the PATCH /employees/:id endpoint.
+  const response = await api.patch(`/employees/${employeeId}`, { managerId });
+  return response.data.data;
 };
