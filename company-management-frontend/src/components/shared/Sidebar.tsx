@@ -10,47 +10,34 @@ import {
   Users,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { cn } from "@/lib/utils"; // A helper for conditional class names from shadcn
+import { cn } from "@/lib/utils";
 
-// The Sidebar component provides the main navigation for the application.
 export function Sidebar() {
   const pathname = usePathname();
-  const { user } = useAuth(); // Get the current user
+  const { user } = useAuth();
 
-  // Define navigation links
+  // Define which specific roles can see each link
   const navLinks = [
-    {
-      href: "/dashboard",
-      label: "Dashboard",
-      icon: LayoutDashboard,
-      adminOnly: false,
-    },
-    {
-      href: "/attendance",
-      label: "Attendance",
-      icon: ClipboardList,
-      adminOnly: false,
-    },
-    { href: "/leave", label: "Leave", icon: CalendarCheck2, adminOnly: false },
-    // --- NEW: Admin-only link ---
-
-    {
-      href: "/employees",
-      label: "All Employees",
-      icon: Users,
-      adminOnly: true,
-    }, // <-- Add this line
-    {
-      href: "/manage-leave",
-      label: "Manage Leave",
-      icon: ShieldCheck,
-      adminOnly: true,
-    },
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/attendance", label: "Attendance", icon: ClipboardList },
+    { href: "/leave", label: "Leave", icon: CalendarCheck2 },
     {
       href: "/team-requests",
       label: "Team Requests",
       icon: Users,
-      adminOnly: true,
+      showForRoles: ["MANAGER", "ADMIN", "HR"],
+    },
+    {
+      href: "/employees",
+      label: "All Employees",
+      icon: Users,
+      showForRoles: ["ADMIN", "HR"],
+    },
+    {
+      href: "/manage-leave",
+      label: "Manage Leave",
+      icon: ShieldCheck,
+      showForRoles: ["ADMIN", "HR"],
     },
   ];
 
@@ -61,14 +48,12 @@ export function Sidebar() {
       </div>
       <nav className="flex flex-col space-y-2">
         {navLinks.map((link) => {
-          // --- NEW: Conditional rendering logic ---
-          // If the link is admin-only and the user is not an admin/hr, skip rendering it.
-
+          // --- UPDATED LOGIC ---
+          // If the link has role restrictions and the user's role is not in the list, skip rendering it.
           if (
-            link.adminOnly &&
-            user?.role !== "ADMIN" &&
-            user?.role !== "MANAGER" &&
-            user?.role !== "HR"
+            link.showForRoles &&
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            !link.showForRoles.includes(user?.role as any)
           ) {
             return null;
           }

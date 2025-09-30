@@ -192,17 +192,18 @@ export default function EmployeeDetailPage() {
               View Detailed Analytics
             </Button>
           </Link>
-          <p className="text-xl text-muted-foreground">{employeeData.email}</p>
+          <p className="text-[14px] text-muted-foreground pt-1">
+            {employeeData.email}
+          </p>
           <div className="mt-2 flex items-center gap-4">
             <Badge variant="outline">{employeeData.role}</Badge>
             <Badge variant="secondary">
-              Dept: {profile?.department || "N/A"}
+              Department: {profile?.department || "N/A"}
             </Badge>
             <div>
-              <Badge variant="outline">Reporting Manager:</Badge>
-
               {manager?.profile ? (
                 <Badge variant="secondary">
+                  Reporting Manager:
                   <Link
                     href={`/employees/${manager.id}`}
                     className="font-semibold  hover:underline underline"
