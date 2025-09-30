@@ -1,9 +1,9 @@
 import { Leave } from '@prisma/client';
 import { Router } from 'express';
-import authRouter from '../modules/auth/routes/auth.routes';
-import employeeRouter from '../modules/employee/routes/employee.routes';
-import attendanceRouter from '../modules/attendance/routes/attendance.routes';
-import leaveRouter from '../modules/leave/routes/leave.routes';
+import authRouter from '../modules/auth/auth.routes';
+import employeeRouter from '../modules/employee/employee.routes';
+import attendanceRouter from '../modules/attendance/attendance.routes';
+import leaveRouter from '../modules/leave/leave.routes';
 
 const mainRouter = Router();
 

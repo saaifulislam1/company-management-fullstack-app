@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { asyncHandler } from '@/utils/asyncHandler';
 import { AuthRequest } from '@/middleware/auth';
 import { ApiResponse } from '@/utils/apiResponse';
-import * as leaveService from '../services/leave.service';
+import * as leaveService from './leave.service';
 
 export const applyLeaveController = asyncHandler(
   async (req: AuthRequest, res: Response) => {

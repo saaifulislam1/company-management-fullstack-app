@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { asyncHandler } from '@/utils/asyncHandler';
 import { ApiResponse } from '@/utils/apiResponse';
-import { loginEmployee } from '../services/auth.service';
+import { loginEmployee } from './auth.service';
 
 /**
  * @controller login

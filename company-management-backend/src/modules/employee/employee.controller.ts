@@ -11,7 +11,7 @@ import {
   getEmployeeAnalytics,
   getFullEmployeeDetails,
   getEmployeeAttendanceAnalytics,
-} from '../services/employee.service';
+} from './employee.service';
 
 export const register = asyncHandler(
   async (req: AuthRequest, res: Response) => {

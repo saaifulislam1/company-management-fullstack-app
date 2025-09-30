@@ -5,7 +5,7 @@ import { authorize } from '@/middleware/role';
 import {
   registerEmployeeSchema,
   updateProfileSchema,
-} from '../validators/employee.validator';
+} from './employee.validator';
 import {
   register,
   getMe,
@@ -15,7 +15,7 @@ import {
   getEmployeeAnalyticsController,
   getFullEmployeeDetailsController,
   getEmployeeAttendanceAnalyticsController,
-} from '../controllers/employee.controller';
+} from './employee.controller';
 
 const router = Router();
 

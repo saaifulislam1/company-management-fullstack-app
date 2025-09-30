@@ -2,8 +2,8 @@ import { Router } from 'express';
 import { protect } from '@/middleware/auth';
 import { authorize } from '@/middleware/role';
 import { validate } from '@/middleware/validate';
-import * as validator from '../validators/leave.validator';
-import * as controller from '../controllers/leave.controller';
+import * as validator from './leave.validator';
+import * as controller from './leave.controller';
 
 const router = Router();
 
