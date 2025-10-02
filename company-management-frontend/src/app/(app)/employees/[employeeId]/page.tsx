@@ -60,13 +60,14 @@ interface Profile {
   vacationBalance?: string;
   sickLeaveBalance?: string;
 }
-
+type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED";
 interface LeaveRecord {
   id: string;
   leaveType: string;
   startDate: string; // ISO String
   endDate: string; // ISO String
-  status: "PENDING" | "APPROVED" | "REJECTED";
+  managerStatus: LeaveStatus;
+  adminStatus: LeaveStatus | null;
 }
 
 interface AttendanceRecord {
@@ -83,7 +84,7 @@ interface FullEmployeeData {
   leaveHistory: LeaveRecord[];
   todaysAttendance: {
     records: AttendanceRecord[];
-    totalHours: string;
+    totalHoursFormatted: string;
   };
   manager: {
     id: string;
@@ -145,7 +146,7 @@ export default function EmployeeDetailPage() {
   };
 
   /** Determines the color of the status badge based on leave status. */
-  const getStatusBadgeVariant = (status: LeaveRecord["status"]) => {
+  const getStatusBadgeVariant = (status: LeaveStatus | null) => {
     switch (status) {
       case "APPROVED":
         return "default";
@@ -181,9 +182,10 @@ export default function EmployeeDetailPage() {
   // Destructure data for easier access in JSX
   const { profile, leaveHistory, todaysAttendance, manager } = employeeData;
   console.log(todaysAttendance, "tdd");
+  console.log(todaysAttendance, "tdd");
   const { firstName = "Unknown", lastName = "User" } = profile || {};
   const fallback = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
-  console.log("timetable", todaysAttendance.totalHours);
+  console.log("timetable", todaysAttendance.totalHoursFormatted);
   return (
     <div className="space-y-8">
       {/* 1. Header Section: Displays the employee's name, avatar, and core info. */}
@@ -256,7 +258,7 @@ export default function EmployeeDetailPage() {
       <div className="grid gap-6 md:grid-cols-2">
         <StatCard
           title="Total Hours Worked Today"
-          value={todaysAttendance.totalHours}
+          value={todaysAttendance.totalHoursFormatted}
           icon={Clock}
         />
         {/* You can add more summary cards here in the future */}
@@ -368,7 +370,8 @@ export default function EmployeeDetailPage() {
                 <TableHead>Type</TableHead>
                 <TableHead>Start Date</TableHead>
                 <TableHead>End Date</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Manager Status</TableHead>
+                <TableHead>Admin Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -381,8 +384,15 @@ export default function EmployeeDetailPage() {
                     <TableCell>{formatDate(leave.startDate)}</TableCell>
                     <TableCell>{formatDate(leave.endDate)}</TableCell>
                     <TableCell>
-                      <Badge variant={getStatusBadgeVariant(leave.status)}>
-                        {leave.status}
+                      <Badge variant={getStatusBadgeVariant(leave.adminStatus)}>
+                        {leave.adminStatus}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={getStatusBadgeVariant(leave.managerStatus)}
+                      >
+                        {leave.managerStatus}
                       </Badge>
                     </TableCell>
                   </TableRow>

@@ -141,7 +141,7 @@ export default function AttendancePage() {
                   <TableCell>{formatDateTime(record.checkIn)}</TableCell>
                   <TableCell>{formatDateTime(record.checkOut)}</TableCell>
                   <TableCell>
-                    {record.workingHours?.toFixed(2) || "N/A"}
+                    {record.workingHours?.toFixed(2) || "Working"}
                   </TableCell>
                 </TableRow>
               ))}
