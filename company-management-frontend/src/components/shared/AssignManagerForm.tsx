@@ -42,7 +42,12 @@ export function AssignManagerForm({
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    getPotentialManagers().then(setManagers);
+    getPotentialManagers().then((allManagers) => {
+      const filteredManagers = allManagers.filter(
+        (manager: { id: string }) => manager.id !== employeeId
+      );
+      setManagers(filteredManagers);
+    });
   }, []);
 
   const handleAssign = () => {
