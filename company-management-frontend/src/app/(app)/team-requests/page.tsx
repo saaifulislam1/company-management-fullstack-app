@@ -35,20 +35,11 @@ import {
   managerUpdateLeaveStatus,
   LeaveRecordWithEmployee,
 } from "@/services/leaveService";
+import Link from "next/link";
 
 // --- TYPE DEFINITIONS ---
 // These types must match the data structure from your backend service.
 type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED";
-
-interface LeaveRecord {
-  id: string;
-  leaveType: string;
-  startDate: string;
-  endDate: string;
-  reason: string;
-  managerStatus: LeaveStatus;
-  adminStatus: LeaveStatus | null; // Admin status can be null
-}
 
 export default function TeamRequestsPage() {
   const [requests, setRequests] = useState<LeaveRecordWithEmployee[]>([]);
@@ -129,9 +120,14 @@ export default function TeamRequestsPage() {
                   <TableRow key={req.id}>
                     {/* Employee Name */}
                     <TableCell className="font-medium">
-                      {req.employee.profile
-                        ? `${req.employee.profile.firstName} ${req.employee.profile.lastName}`
-                        : "N/A"}
+                      <Link
+                        href={`/employees/${req.employee.id}`}
+                        className="hover:underline"
+                      >
+                        {req.employee.profile
+                          ? `${req.employee.profile.firstName} ${req.employee.profile.lastName}`
+                          : "N/A"}
+                      </Link>
                     </TableCell>
 
                     {/* Dates */}

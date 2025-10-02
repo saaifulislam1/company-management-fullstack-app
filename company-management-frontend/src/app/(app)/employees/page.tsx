@@ -132,7 +132,7 @@ export default function AllEmployeesPage() {
                   <TableRow key={employee.id}>
                     <TableCell className="font-medium">
                       <Link
-                        href={`/employees/${employee.id}`} // <-- Use the employee's ID
+                        href={`/employees/${employee.id}`}
                         className="hover:underline text-blue-600 dark:text-blue-400"
                       >
                         {employee.profile

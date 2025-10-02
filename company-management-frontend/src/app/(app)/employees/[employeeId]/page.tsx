@@ -24,15 +24,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { getFullEmployeeDetails } from "@/services/employeeService";
-import {
-  Clock,
-  Phone,
-  Home,
-  AlertTriangle,
-  CalendarDays,
-  User,
-  Siren,
-} from "lucide-react";
+import { Clock, Phone, Home, CalendarDays, User, Siren } from "lucide-react";
 import Link from "next/link";
 import { StatCard } from "@/components/shared/StatCard";
 
@@ -44,10 +36,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { AssignManagerForm } from "@/components/shared/AssignManagerForm";
-
-// --- TYPE DEFINITIONS ---
-// These interfaces define the exact shape of the data we expect from our API,
-// ensuring full type safety throughout the component.
+import { useAuth } from "@/hooks/useAuth";
 
 interface Profile {
   firstName: string;
@@ -96,6 +85,8 @@ interface FullEmployeeData {
 }
 
 export default function EmployeeDetailPage() {
+  const { user } = useAuth();
+  console.log(user, "user");
   // Get the dynamic employeeId from the URL
   const params = useParams();
   const employeeId = params.employeeId as string;
@@ -174,11 +165,10 @@ export default function EmployeeDetailPage() {
 
   // Destructure data for easier access in JSX
   const { profile, leaveHistory, todaysAttendance, manager } = employeeData;
-  console.log(todaysAttendance, "tdd");
-  console.log(todaysAttendance, "tdd");
+
   const { firstName = "Unknown", lastName = "User" } = profile || {};
   const fallback = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
-  console.log("timetable", todaysAttendance.totalHoursFormatted);
+
   return (
     <div className="space-y-8">
       {/* 1. Header Section: Displays the employee's name, avatar, and core info. */}
@@ -227,27 +217,30 @@ export default function EmployeeDetailPage() {
             </div>
           </div>
         </div>
-      </div>
+      </div>{" "}
+      {(user?.role === "ADMIN" || user?.role === "HR") && (
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline">
+              <UserPlus className="mr-2 h-4 w-4" /> Assign Manager
+            </Button>
+          </DialogTrigger>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline">
-            <UserPlus className="mr-2 h-4 w-4" /> Assign Manager
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Assign a Manager</DialogTitle>
-          </DialogHeader>
-          <AssignManagerForm
-            employeeId={employeeId}
-            onSuccess={() => {
-              setIsDialogOpen(false);
-              fetchDetails(); // Refetch data to show the new manager
-            }}
-          />
-        </DialogContent>
-      </Dialog>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Assign a Manager</DialogTitle>
+            </DialogHeader>
+
+            <AssignManagerForm
+              employeeId={employeeId}
+              onSuccess={() => {
+                setIsDialogOpen(false);
+                fetchDetails();
+              }}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
       <div className="grid gap-6 md:grid-cols-2">
         <StatCard
           title="Total Hours Worked Today"
@@ -256,7 +249,6 @@ export default function EmployeeDetailPage() {
         />
         {/* You can add more summary cards here in the future */}
       </div>
-
       {/* 2. Details Grid: Shows key profile and attendance information at a glance. */}
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
@@ -321,7 +313,6 @@ export default function EmployeeDetailPage() {
           </CardContent>
         </Card>
       </div>
-
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

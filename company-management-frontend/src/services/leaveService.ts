@@ -23,6 +23,7 @@ export interface LeaveApplicationData {
 
 export interface LeaveRecordWithEmployee extends LeaveRecord {
   employee: {
+    id: string;
     profile: {
       firstName: string;
       lastName: string;

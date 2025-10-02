@@ -63,7 +63,7 @@ router
 router.get(
   '/:id/details',
   protect,
-  authorize('ADMIN', 'HR'),
+  // authorize('ADMIN', 'HR'),
   getFullEmployeeDetailsController,
 );
 
