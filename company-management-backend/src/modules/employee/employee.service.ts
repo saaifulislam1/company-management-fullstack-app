@@ -47,18 +47,21 @@ export const registerEmployee = async (data: any) => {
   return employeeWithoutPassword;
 };
 
-/**
- * @async
- * @function getEmployeeProfile
- * @description Fetches the profile for a given employee ID.
- * @param {string} employeeId - The ID of the employee.
- * @returns {Promise<object>} The employee's data including their profile.
- */
 export const getEmployeeProfile = async (employeeId: string) => {
   const employee = await prisma.employee.findUnique({
     where: { id: employeeId },
     include: {
-      profile: true, // Eagerly load the related profile data
+      profile: true,
+      manager: {
+        select: {
+          profile: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -137,7 +140,7 @@ export const findEmployeeById = async (employeeId: string) => {
       id: true,
       email: true,
       role: true,
-      profile: true, // Include the full related profile object
+      profile: true,
     },
   });
 

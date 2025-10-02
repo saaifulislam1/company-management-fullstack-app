@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -33,11 +33,14 @@ const profileFormSchema = z.object({
   lastName: z.string().min(1, "Last name is required"),
   phone: z.string().optional(),
   address: z.string().optional(),
-  emergencyContact: z.string().optional(), // <-- Add here
+  emergencyContact: z.string().optional(),
 });
 
 export default function ProfilePage() {
   const { user } = useAuth();
+  const [managerName, setManagerName] = useState<string>(
+    "No manager assigned yet"
+  );
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -57,6 +60,15 @@ export default function ProfilePage() {
         try {
           const profileData = await getMyProfile();
           const profile = profileData.data.profile || {};
+          setManagerName(
+            profileData.data.manager.profile.firstName +
+              " " +
+              profileData.data.manager.profile.lastName
+          );
+          console.log(
+            profileData.data.manager.profile.firstName,
+            "profiledata"
+          );
 
           form.reset({
             firstName: profile.firstName || "",
@@ -177,6 +189,10 @@ export default function ProfilePage() {
                 <div className="space-y-2">
                   <Label>Role</Label>
                   <Input value={user?.role || ""} disabled />
+                </div>
+                <div className="space-y-2">
+                  <Label>Manager Name</Label>
+                  <Input value={managerName || ""} disabled />
                 </div>
               </div>
               <div className="flex justify-end">

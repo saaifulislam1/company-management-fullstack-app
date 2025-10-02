@@ -94,8 +94,13 @@ export const managerUpdateLeaveStatus = async (
   managerId: string,
   status: LeaveStatus,
 ) => {
-  const leave = await prisma.leave.findUnique({ where: { id: leaveId } });
-  if (!leave || leave.approvedById !== managerId) {
+  const leave = await prisma.leave.findUnique({
+    where: { id: leaveId },
+    include: {
+      employee: true, // <-- This gets the most up-to-date employee info
+    },
+  });
+  if (!leave || leave.employee.managerId !== managerId) {
     throw new ApiError(403, 'You are not authorized to update this request.');
   }
   return prisma.leave.update({
