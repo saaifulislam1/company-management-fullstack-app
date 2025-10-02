@@ -100,20 +100,19 @@ export default function EmployeeDetailPage() {
   const params = useParams();
   const employeeId = params.employeeId as string;
 
-  // --- STATE MANAGEMENT ---
-  // A single state object to hold all data for the employee
   const [employeeData, setEmployeeData] = useState<FullEmployeeData | null>(
     null
   );
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchDetails = async () => {
-    if (!employeeId) return; // Don't fetch if there's no ID
+    if (!employeeId) return;
 
     try {
       setIsLoading(true);
-      // Call our single, comprehensive API endpoint
+
       const data = await getFullEmployeeDetails(employeeId);
       console.log(data, "dattaa");
       setEmployeeData(data);
@@ -128,9 +127,6 @@ export default function EmployeeDetailPage() {
   useEffect(() => {
     fetchDetails();
   }, [employeeId]);
-
-  // --- HELPER FUNCTIONS ---
-  // These functions keep our JSX clean and logic reusable.
 
   /** Formats an ISO date string to a time in the 'Asia/Dhaka' timezone. */
   const formatTime = (dateString: string | null) => {
@@ -159,9 +155,6 @@ export default function EmployeeDetailPage() {
     }
   };
 
-  // --- RENDER LOGIC ---
-
-  // Display a loading state while fetching data
   if (isLoading) {
     return (
       <div className="text-center py-10 text-lg">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { format, parseISO } from "date-fns";
 import toast from "react-hot-toast";
 
@@ -25,6 +25,7 @@ import { getAllEmployees } from "@/services/employeeService";
 import { RegisterEmployeeForm } from "@/components/shared/RegisterEmployeeForm";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
+import { Input } from "@/components/ui/input";
 
 // Define the shape of the employee data we expect
 interface EmployeeData {
@@ -40,6 +41,7 @@ interface EmployeeData {
 
 export default function AllEmployeesPage() {
   const [employees, setEmployees] = useState<EmployeeData[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -58,6 +60,22 @@ export default function AllEmployeesPage() {
   useEffect(() => {
     fetchEmployees();
   }, []);
+  const filteredEmployees = useMemo(() => {
+    if (!searchTerm) {
+      return employees; // If search is empty, return all employees
+    }
+    return employees.filter((employee) => {
+      const fullName = employee.profile
+        ? `${employee.profile.firstName} ${employee.profile.lastName}`
+        : "";
+      const email = employee.email;
+      // Return true if the full name or email includes the search term (case-insensitive)
+      return (
+        fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        email.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    });
+  }, [employees, searchTerm]);
 
   return (
     <div className="space-y-6">
@@ -84,6 +102,13 @@ export default function AllEmployeesPage() {
       <Card>
         <CardHeader>
           <CardTitle>Employee List</CardTitle>
+          <div className="w-full max-w-sm">
+            <Input
+              placeholder="Search by name or email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -103,7 +128,7 @@ export default function AllEmployeesPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                employees.map((employee) => (
+                filteredEmployees.map((employee) => (
                   <TableRow key={employee.id}>
                     <TableCell className="font-medium">
                       <Link
