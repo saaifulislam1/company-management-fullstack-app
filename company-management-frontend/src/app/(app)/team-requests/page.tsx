@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { format, parseISO } from "date-fns";
 import toast from "react-hot-toast";
-import Link from "next/link";
 
 // UI Components
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,49 +31,59 @@ import { Info } from "lucide-react";
 
 // Services and Types
 import {
-  getAllLeaveRequests,
-  adminUpdateLeaveStatus,
-  LeaveRecord,
+  getTeamLeaveRequests,
+  managerUpdateLeaveStatus,
   LeaveRecordWithEmployee,
 } from "@/services/leaveService";
 
+// --- TYPE DEFINITIONS ---
+// These types must match the data structure from your backend service.
 type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED";
 
-export default function ManageLeavePage() {
+interface LeaveRecord {
+  id: string;
+  leaveType: string;
+  startDate: string;
+  endDate: string;
+  reason: string;
+  managerStatus: LeaveStatus;
+  adminStatus: LeaveStatus | null; // Admin status can be null
+}
+
+export default function TeamRequestsPage() {
   const [requests, setRequests] = useState<LeaveRecordWithEmployee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchAllRequests = async () => {
+  // Fetches all leave requests for the manager's team
+  const fetchTeamRequests = async () => {
     try {
       setIsLoading(true);
-      // Fetches only requests approved by managers
-      const data = await getAllLeaveRequests();
+      const data = await getTeamLeaveRequests();
       setRequests(data);
     } catch (error) {
-      toast.error("Failed to fetch leave requests.");
+      toast.error("Failed to fetch team's leave requests.");
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchAllRequests();
+    fetchTeamRequests();
   }, []);
 
-  // Use toast.promise for better feedback during the API call
-  const handleStatusChange = (leaveId: string, status: LeaveStatus) => {
-    const promise = adminUpdateLeaveStatus(leaveId, status).then(() => {
-      // Refresh data on success
-      fetchAllRequests();
-    });
-
-    toast.promise(promise, {
-      loading: "Updating status...",
-      success: "Status updated successfully!",
-      error: "Failed to update status.",
-    });
+  // Handles the manager's decision to update the status
+  const handleStatusChange = async (leaveId: string, status: LeaveStatus) => {
+    try {
+      await managerUpdateLeaveStatus(leaveId, status);
+      toast.success(`Request status has been updated.`);
+      // Refresh the list to show the change
+      fetchTeamRequests();
+    } catch (error) {
+      toast.error("Failed to update the request.");
+    }
   };
 
+  // Helper to determine the color of the status badge
   const getStatusBadgeVariant = (status: LeaveStatus | null) => {
     if (!status) return "secondary";
     switch (status) {
@@ -91,10 +100,10 @@ export default function ManageLeavePage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Manage Leave Requests</h1>
+      <h1 className="text-3xl font-bold">Team Leave Requests</h1>
       <Card>
         <CardHeader>
-          <CardTitle>Manager-Approved Leave Requests</CardTitle>
+          <CardTitle>Leave Requests from Your Team</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -103,9 +112,9 @@ export default function ManageLeavePage() {
                 <TableHead>Employee</TableHead>
                 <TableHead>Dates</TableHead>
                 <TableHead>Reason</TableHead>
-                <TableHead>Managers Decision</TableHead>
-                <TableHead>Final Status</TableHead>
-                <TableHead className="text-left">Your Final Action</TableHead>
+                <TableHead>Manager Status</TableHead>
+                <TableHead>Admin Status</TableHead>
+                <TableHead className="text-left">Your Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -118,20 +127,20 @@ export default function ManageLeavePage() {
               ) : requests.length > 0 ? (
                 requests.map((req) => (
                   <TableRow key={req.id}>
+                    {/* Employee Name */}
                     <TableCell className="font-medium">
-                      <Link
-                        href={`/employees/${req.employeeId}`}
-                        className="hover:underline"
-                      >
-                        {req.employee.profile
-                          ? `${req.employee.profile.firstName} ${req.employee.profile.lastName}`
-                          : "N/A"}
-                      </Link>
+                      {req.employee.profile
+                        ? `${req.employee.profile.firstName} ${req.employee.profile.lastName}`
+                        : "N/A"}
                     </TableCell>
+
+                    {/* Dates */}
                     <TableCell>
                       {format(parseISO(req.startDate), "dd MMM")} -{" "}
                       {format(parseISO(req.endDate), "dd MMM, yyyy")}
                     </TableCell>
+
+                    {/* Reason (via HoverCard) */}
                     <TableCell>
                       <HoverCard>
                         <HoverCardTrigger asChild>
@@ -145,28 +154,36 @@ export default function ManageLeavePage() {
                         </HoverCardContent>
                       </HoverCard>
                     </TableCell>
+
+                    {/* Manager's current decision */}
                     <TableCell>
                       <Badge variant={getStatusBadgeVariant(req.managerStatus)}>
                         {req.managerStatus}
                       </Badge>
                     </TableCell>
+
+                    {/* Admin's final decision */}
                     <TableCell>
                       <Badge variant={getStatusBadgeVariant(req.adminStatus)}>
                         {req.adminStatus || "Awaiting"}
                       </Badge>
                     </TableCell>
+
+                    {/* Manager's Action Dropdown */}
                     <TableCell className="text-right">
                       <Select
-                        defaultValue={req.adminStatus || "PENDING"}
+                        defaultValue={req.managerStatus}
+                        // The manager can only act if the admin has not yet made a final decision.
+                        disabled={!!req.adminStatus}
                         onValueChange={(newStatus: LeaveStatus) => {
                           handleStatusChange(req.id, newStatus);
                         }}
                       >
-                        <SelectTrigger className="w-[120px] ">
+                        <SelectTrigger className="w-[120px]">
                           <SelectValue placeholder="Set status" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="PENDING">Awaiting</SelectItem>
+                          <SelectItem value="PENDING">Pending</SelectItem>
                           <SelectItem value="APPROVED">Approve</SelectItem>
                           <SelectItem value="REJECTED">Reject</SelectItem>
                         </SelectContent>
@@ -177,7 +194,7 @@ export default function ManageLeavePage() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={6} className="h-24 text-center">
-                    No manager-approved requests to show.
+                    No leave requests found from your team.
                   </TableCell>
                 </TableRow>
               )}

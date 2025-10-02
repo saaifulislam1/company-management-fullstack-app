@@ -4,7 +4,7 @@ import {
   checkInController,
   checkOutController,
   getHistoryController,
-} from '../controllers/attendance.controller';
+} from './attendance.controller';
 
 const router = Router();
 

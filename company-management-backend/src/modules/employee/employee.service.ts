@@ -6,13 +6,6 @@ import { startOfMonth, endOfMonth, startOfDay, endOfDay } from 'date-fns';
 import { formatDuration } from '@/utils/formatDuration';
 import { getYear, getMonth, getWeek, format } from 'date-fns';
 
-/**
- * @async
- * @function registerEmployee
- * @description Creates a new employee and their profile in a single transaction.
- * @param {Prisma.EmployeeCreateInput & { profile: Omit<Profile, 'id' | 'employeeId'> }} data
- * @returns {Promise<object>} The newly created employee object without the password.
- */
 export const registerEmployee = async (data: any) => {
   // 1. Check if an employee with this email already exists
   const existingEmployee = await prisma.employee.findUnique({
@@ -94,39 +87,40 @@ export const findAllEmployees = async () => {
   });
   return employees;
 };
-/**
- * @async
- * @function updateEmployeeProfile
- * @description Updates an employee's profile.
- * @param {string} employeeId - The ID of the employee whose profile is to be updated.
- * @param {Prisma.ProfileUpdateInput} data - The data to update.
- * @returns {Promise<Profile>} The updated profile object.
- */
+
 export const updateEmployeeProfile = async (
   employeeId: string,
   data: {
+    managerId?: string;
     firstName?: string;
     lastName?: string;
     phone?: string;
     address?: string;
+    // Add any other profile fields here
   },
 ) => {
+  // 1. Separate the managerId from the rest of the profile fields.
+  const { managerId, ...profileData } = data;
+
+  // 2. Use the separated variables in the correct places in the query.
   return prisma.employee.update({
     where: { id: employeeId },
     data: {
+      // `managerId` is updated directly on the Employee model.
+      managerId: managerId,
+
+      // The rest of the data (`profileData`) is for the nested Profile model.
       profile: {
-        // Use `upsert` instead of `update`
         upsert: {
           // 'create' is used if no profile exists for this employee
           create: {
-            firstName: data.firstName || '', // Provide required fields
-            lastName: data.lastName || '',
-            dateOfJoining: new Date(), // Provide a default for required fields
-            phone: data.phone,
-            address: data.address,
+            firstName: profileData.firstName || 'New',
+            lastName: profileData.lastName || 'User',
+            dateOfJoining: new Date(),
+            ...profileData,
           },
           // 'update' is used if a profile already exists
-          update: data,
+          update: profileData,
         },
       },
     },
@@ -135,7 +129,6 @@ export const updateEmployeeProfile = async (
     },
   });
 };
-
 export const findEmployeeById = async (employeeId: string) => {
   const employee = await prisma.employee.findUnique({
     where: { id: employeeId },
@@ -203,10 +196,27 @@ export const getEmployeeAnalytics = async (employeeId: string) => {
 };
 
 export const getFullEmployeeDetails = async (employeeId: string) => {
-  // 1. Fetch the employee's base profile
+  // 1. Fetch the employee and all related data in one query
   const employee = await prisma.employee.findUnique({
     where: { id: employeeId },
-    include: { profile: true },
+    // Use `select` to get exactly what you need, including the manager's profile
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      profile: true,
+      manager: {
+        select: {
+          id: true,
+          profile: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+      },
+    },
   });
 
   if (!employee) {
@@ -238,13 +248,12 @@ export const getFullEmployeeDetails = async (employeeId: string) => {
   );
 
   // 4. Structure and return all the data
-  const { password, ...employeeWithoutPassword } = employee;
   return {
-    ...employeeWithoutPassword,
+    ...employee,
     leaveHistory,
     todaysAttendance: {
       records: todaysAttendance,
-      totalHours: formatDuration(totalHoursToday), // <-- Use our formatter
+      totalHoursFormatted: formatDuration(totalHoursToday),
     },
   };
 };
@@ -300,4 +309,24 @@ export const getEmployeeAttendanceAnalytics = async (employeeId: string) => {
     weeklySummary: analytics.byWeek,
     monthlyChartData,
   };
+};
+export const findPotentialManagers = async () => {
+  return prisma.employee.findMany({
+    where: {
+      role: {
+        in: ['MANAGER', 'ADMIN', 'HR'],
+      },
+    },
+    select: {
+      id: true,
+      email: true,
+      profile: {
+        select: {
+          firstName: true,
+          lastName: true,
+          department: true,
+        },
+      },
+    },
+  });
 };

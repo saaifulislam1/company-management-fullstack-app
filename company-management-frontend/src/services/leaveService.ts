@@ -9,8 +9,10 @@ export interface LeaveRecord {
   reason: string;
   status: "PENDING" | "APPROVED" | "REJECTED";
   employeeId: string;
+  managerStatus: LeaveStatus;
+  adminStatus: LeaveStatus | null; // Can be null
 }
-
+type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED";
 // Defines the shape of the data needed to apply for leave
 export interface LeaveApplicationData {
   leaveType: string;
@@ -60,5 +62,29 @@ export const updateLeaveStatus = async (
   status: "APPROVED" | "REJECTED" | "PENDING"
 ): Promise<LeaveRecord> => {
   const response = await api.patch(`/leave/requests/${leaveId}`, { status });
+  return response.data.data;
+};
+
+export const getTeamLeaveRequests = async (): Promise<
+  LeaveRecordWithEmployee[]
+> => {
+  const response = await api.get("/leave/team-requests");
+  return response.data.data;
+};
+export const adminUpdateLeaveStatus = async (
+  leaveId: string,
+  status: LeaveStatus
+): Promise<LeaveRecord> => {
+  const response = await api.patch(`/leave/requests/${leaveId}`, { status });
+  return response.data.data;
+};
+
+export const managerUpdateLeaveStatus = async (
+  leaveId: string,
+  status: "APPROVED" | "REJECTED" | "PENDING"
+): Promise<LeaveRecord> => {
+  const response = await api.patch(`/leave/team-requests/${leaveId}`, {
+    status,
+  });
   return response.data.data;
 };

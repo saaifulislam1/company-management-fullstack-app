@@ -21,5 +21,6 @@ export const updateProfileSchema = z.object({
     phone: z.string().optional(),
     address: z.string().optional(),
     emergencyContact: z.string().optional(), // <-- Add this line
+    managerId: z.string().optional(),
   }),
 });

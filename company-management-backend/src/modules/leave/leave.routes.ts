@@ -2,8 +2,8 @@ import { Router } from 'express';
 import { protect } from '@/middleware/auth';
 import { authorize } from '@/middleware/role';
 import { validate } from '@/middleware/validate';
-import * as validator from '../validators/leave.validator';
-import * as controller from '../controllers/leave.controller';
+import * as validator from './leave.validator';
+import * as controller from './leave.controller';
 
 const router = Router();
 
@@ -24,11 +24,19 @@ router.get(
   authorize('ADMIN', 'HR'),
   controller.getAllRequestsController,
 );
+router.get('/team-requests', protect, controller.getTeamRequestsController);
+router.patch(
+  '/team-requests/:leaveId',
+
+  protect,
+  validate(validator.updateLeaveStatusSchema),
+  controller.managerUpdateStatusController,
+);
 router.patch(
   '/requests/:leaveId',
   authorize('ADMIN', 'HR'),
   validate(validator.updateLeaveStatusSchema),
-  controller.updateStatusController,
+  controller.adminUpdateStatusController,
 );
 
 export default router;

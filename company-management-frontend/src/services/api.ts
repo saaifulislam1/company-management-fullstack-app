@@ -42,13 +42,14 @@ api.interceptors.response.use(
     // If the API returns a 401 Unauthorized error (e.g., token expired),
     // it's a good place to automatically log the user out.
     if (error.response?.status === 401) {
-      // Note: We avoid calling the logout function directly to prevent circular dependencies.
-      // Instead, we can dispatch a custom event or redirect. For now, we'll just
-      // remove the token and reload the page to force a re-authentication.
-      console.error("Unauthorized access - logging out.");
-      localStorage.removeItem("authToken");
-      // Redirecting to login page
-      window.location.href = "/login";
+      // ...AND that the failed request was NOT to the login endpoint.
+      // This prevents a logout loop on a failed login attempt.
+      if (error.config.url !== "/auth/login") {
+        console.error("Session expired or invalid, logging out.");
+        localStorage.removeItem("authToken");
+        // Redirect to login for expired sessions on protected routes.
+        window.location.href = "/login";
+      }
     }
     // For all other errors, just reject the promise.
     return Promise.reject(error);

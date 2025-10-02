@@ -2,11 +2,7 @@ import { Response } from 'express';
 import { asyncHandler } from '@/utils/asyncHandler';
 import { AuthRequest } from '@/middleware/auth';
 import { ApiResponse } from '@/utils/apiResponse';
-import {
-  checkIn,
-  checkOut,
-  getAttendanceHistory,
-} from '../services/attendance.service';
+import { checkIn, checkOut, getAttendanceHistory } from './attendance.service';
 
 export const checkInController = asyncHandler(
   async (req: AuthRequest, res: Response) => {

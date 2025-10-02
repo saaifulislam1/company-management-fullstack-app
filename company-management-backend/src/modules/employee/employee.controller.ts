@@ -11,7 +11,8 @@ import {
   getEmployeeAnalytics,
   getFullEmployeeDetails,
   getEmployeeAttendanceAnalytics,
-} from '../services/employee.service';
+  findPotentialManagers,
+} from './employee.service';
 
 export const register = asyncHandler(
   async (req: AuthRequest, res: Response) => {
@@ -103,5 +104,25 @@ export const getEmployeeAttendanceAnalyticsController = asyncHandler(
     res
       .status(200)
       .json(new ApiResponse(200, analytics, 'Attendance analytics fetched'));
+  },
+);
+export const getPotentialManagersController = asyncHandler(
+  async (_req, res) => {
+    const managers = await findPotentialManagers();
+    res
+      .status(200)
+      .json(new ApiResponse(200, managers, 'Potential managers fetched'));
+  },
+);
+export const updateEmployeeProfileController = asyncHandler(
+  async (req, res) => {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    const updatedEmployee = await updateEmployeeProfile(id, updateData);
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, updatedEmployee, 'Employee profile updated'));
   },
 );

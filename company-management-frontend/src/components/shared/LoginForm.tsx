@@ -71,8 +71,13 @@ export function LoginForm() {
       router.push("/");
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      // If the API call fails, set an error message to display to the user
-      setError(err.response?.data?.message || "An unexpected error occurred.");
+      if (err.response && err.response.status === 401) {
+        // If it is, show a user-friendly, specific message.
+        setError("The email or password you entered is incorrect.");
+      } else {
+        // For any other type of error, show a generic message.
+        setError("Something is wrong with the Server, Please Try again later");
+      }
     }
   }
 

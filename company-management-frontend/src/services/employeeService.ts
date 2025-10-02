@@ -2,7 +2,7 @@ import api from "./api";
 export interface RegistrationData {
   email: string;
   password: string;
-  role: "EMPLOYEE" | "HR" | "ADMIN";
+  role: "EMPLOYEE" | "HR" | "ADMIN" | "MANAGER";
   firstName: string;
   lastName: string;
   dateOfJoining: Date;
@@ -45,5 +45,20 @@ export const getEmployeeAttendanceAnalytics = async (employeeId: string) => {
   const response = await api.get(
     `/employees/${employeeId}/attendance-analytics`
   );
+  return response.data.data;
+};
+export const getPotentialManagers = async () => {
+  const response = await api.get("/employees/potential-managers");
+  return response.data.data;
+};
+
+/**
+ * @service assignManager
+ * @description Assigns a manager to a specific employee.
+ */
+export const assignManager = async (employeeId: string, managerId: string) => {
+  // This is the only line that should be in this function.
+  // It correctly calls the PATCH /employees/:id endpoint.
+  const response = await api.patch(`/employees/${employeeId}`, { managerId });
   return response.data.data;
 };

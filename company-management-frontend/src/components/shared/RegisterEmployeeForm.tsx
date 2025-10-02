@@ -41,7 +41,7 @@ const formSchema = z.object({
     .min(8, { message: "Password must be at least 8 characters." }),
   firstName: z.string().min(1, { message: "First name is required." }),
   lastName: z.string().min(1, { message: "Last name is required." }),
-  role: z.enum(["EMPLOYEE", "HR", "ADMIN"]),
+  role: z.enum(["EMPLOYEE", "HR", "ADMIN", "MANAGER"]),
   department: z.enum([
     "HR",
     "SOFTWARE",
@@ -160,6 +160,7 @@ export function RegisterEmployeeForm({
                     <SelectItem value="EMPLOYEE">Employee</SelectItem>
                     <SelectItem value="HR">HR</SelectItem>
                     <SelectItem value="ADMIN">Admin</SelectItem>
+                    <SelectItem value="MANAGER">Manager</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />

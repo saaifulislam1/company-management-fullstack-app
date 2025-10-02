@@ -5,20 +5,14 @@ import { useParams } from "next/navigation";
 import { format, parseISO } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 import toast from "react-hot-toast";
-
-// in employees/[employeeId]/page.tsx
-
 import { Button } from "@/components/ui/button";
-import { BarChartHorizontalBig } from "lucide-react";
-
-// UI Components
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+  BarChartHorizontalBig,
+  Briefcase,
+  HeartPulse,
+  UserPlus,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Table,
@@ -29,14 +23,27 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-
-// Services and Hooks
 import { getFullEmployeeDetails } from "@/services/employeeService";
-
-// Icons
-import { Clock, Phone, Home, AlertTriangle, CalendarDays } from "lucide-react";
+import {
+  Clock,
+  Phone,
+  Home,
+  AlertTriangle,
+  CalendarDays,
+  User,
+  Siren,
+} from "lucide-react";
 import Link from "next/link";
 import { StatCard } from "@/components/shared/StatCard";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { AssignManagerForm } from "@/components/shared/AssignManagerForm";
 
 // --- TYPE DEFINITIONS ---
 // These interfaces define the exact shape of the data we expect from our API,
@@ -50,6 +57,8 @@ interface Profile {
   emergencyContact: string | null;
   department: string;
   dateOfJoining: string; // ISO String
+  vacationBalance?: string;
+  sickLeaveBalance?: string;
 }
 
 interface LeaveRecord {
@@ -69,13 +78,20 @@ interface AttendanceRecord {
 interface FullEmployeeData {
   id: string;
   email: string;
-  role: "EMPLOYEE" | "HR" | "ADMIN";
+  role: "EMPLOYEE" | "HR" | "ADMIN" | "MANAGER";
   profile: Profile | null;
   leaveHistory: LeaveRecord[];
   todaysAttendance: {
     records: AttendanceRecord[];
     totalHours: string;
   };
+  manager: {
+    id: string;
+    profile: {
+      firstName: string;
+      lastName: string;
+    } | null;
+  } | null;
 }
 
 export default function EmployeeDetailPage() {
@@ -88,28 +104,27 @@ export default function EmployeeDetailPage() {
   const [employeeData, setEmployeeData] = useState<FullEmployeeData | null>(
     null
   );
-  // A state to handle the loading UI
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  const fetchDetails = async () => {
+    if (!employeeId) return; // Don't fetch if there's no ID
+
+    try {
+      setIsLoading(true);
+      // Call our single, comprehensive API endpoint
+      const data = await getFullEmployeeDetails(employeeId);
+      console.log(data, "dattaa");
+      setEmployeeData(data);
+    } catch (error) {
+      toast.error("Failed to fetch employee details.");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   // --- DATA FETCHING ---
   useEffect(() => {
-    // This effect runs when the component mounts or when the employeeId changes.
-    const fetchDetails = async () => {
-      if (!employeeId) return; // Don't fetch if there's no ID
-
-      try {
-        setIsLoading(true);
-        // Call our single, comprehensive API endpoint
-        const data = await getFullEmployeeDetails(employeeId);
-        setEmployeeData(data);
-      } catch (error) {
-        toast.error("Failed to fetch employee details.");
-        console.error(error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchDetails();
   }, [employeeId]);
 
@@ -164,7 +179,7 @@ export default function EmployeeDetailPage() {
   }
 
   // Destructure data for easier access in JSX
-  const { profile, leaveHistory, todaysAttendance } = employeeData;
+  const { profile, leaveHistory, todaysAttendance, manager } = employeeData;
   console.log(todaysAttendance, "tdd");
   const { firstName = "Unknown", lastName = "User" } = profile || {};
   const fallback = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
@@ -182,19 +197,62 @@ export default function EmployeeDetailPage() {
           </h1>
           <Link href={`/employees/${employeeData.id}/analytics`}>
             <Button variant="outline" className="mt-4">
-              <BarChartHorizontalBig className="mr-2 h-4 w-4" />
+              <BarChartHorizontalBig className="mr-2 h-4 w-4 text-[20px]" />
               View Detailed Analytics
             </Button>
           </Link>
-          <p className="text-xl text-muted-foreground">{employeeData.email}</p>
+          <p className="text-[18px] text-muted-foreground pt-1">
+            {employeeData.email}
+          </p>
           <div className="mt-2 flex items-center gap-4">
-            <Badge variant="outline">{employeeData.role}</Badge>
-            <Badge variant="secondary">
-              Dept: {profile?.department || "N/A"}
+            <Badge variant="outline" className="text-[14px]">
+              Role: {employeeData.role}
             </Badge>
+            <Badge variant="secondary" className="text-[14px]">
+              Department: {profile?.department || "N/A"}
+            </Badge>
+            <div>
+              {manager?.profile ? (
+                <Badge variant="secondary" className="text-[14px]">
+                  Reporting Manager:
+                  <Link
+                    href={`/employees/${manager.id}`}
+                    className="font-semibold  hover:underline underline"
+                  >
+                    {manager.profile.firstName} {manager.profile.lastName}
+                  </Link>
+                </Badge>
+              ) : (
+                <Badge variant="secondary">
+                  <h4 className="font-semibold text-[14px]  hover:underline ">
+                    No manager assigned
+                  </h4>
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline">
+            <UserPlus className="mr-2 h-4 w-4" /> Assign Manager
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign a Manager</DialogTitle>
+          </DialogHeader>
+          <AssignManagerForm
+            employeeId={employeeId}
+            onSuccess={() => {
+              setIsDialogOpen(false);
+              fetchDetails(); // Refetch data to show the new manager
+            }}
+          />
+        </DialogContent>
+      </Dialog>
       <div className="grid gap-6 md:grid-cols-2">
         <StatCard
           title="Total Hours Worked Today"
@@ -244,6 +302,12 @@ export default function EmployeeDetailPage() {
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div className="flex items-center">
+              <User className="mr-3 h-4 w-4 text-muted-foreground" />{" "}
+              {profile?.firstName || "Not provided"}{" "}
+              {profile?.lastName || "Not provided"}
+            </div>
+
+            <div className="flex items-center">
               <Phone className="mr-3 h-4 w-4 text-muted-foreground" />{" "}
               {profile?.phone || "Not provided"}
             </div>
@@ -252,7 +316,7 @@ export default function EmployeeDetailPage() {
               {profile?.address || "Not provided"}
             </div>
             <div className="flex items-center">
-              <AlertTriangle className="mr-3 h-4 w-4 text-muted-foreground" />{" "}
+              <Siren className="mr-3 h-4 w-4 text-muted-foreground" />{" "}
               {profile?.emergencyContact || "Not provided"}
             </div>
             <div className="flex items-center">
@@ -263,6 +327,35 @@ export default function EmployeeDetailPage() {
         </Card>
       </div>
 
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Vacation Balance
+            </CardTitle>
+            <Briefcase className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {profile?.vacationBalance || 0} Days
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Sick Leave Balance
+            </CardTitle>
+            <HeartPulse className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {profile?.sickLeaveBalance || 0} Days
+            </div>
+          </CardContent>
+        </Card>
+      </div>
       {/* 3. Leave History Table: A full log of the employee's leave requests. */}
       <Card>
         <CardHeader>
