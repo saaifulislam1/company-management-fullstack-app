@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { format } from "date-fns";
+import { format, startOfDay } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -44,7 +44,7 @@ const formSchema = z.object({
   endDate: z.date().refine((val) => val !== null, {
     message: "End date is required",
   }),
-  reason: z.string().min(10, "Reason must be at least 10 characters long"),
+  reason: z.string().min(3, "Reason must be at least 3 characters long"),
 });
 
 // The component receives functions to call on success and to close the dialog
@@ -145,7 +145,7 @@ export function LeaveApplicationForm({
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
-                      initialFocus
+                      disabled={(date) => date < startOfDay(new Date())}
                     />
                   </PopoverContent>
                 </Popover>
@@ -185,7 +185,7 @@ export function LeaveApplicationForm({
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
-                      initialFocus
+                      disabled={(date) => date < startOfDay(new Date())}
                     />
                   </PopoverContent>
                 </Popover>
