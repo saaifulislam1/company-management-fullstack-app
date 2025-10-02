@@ -89,7 +89,7 @@ export default function AttendancePage() {
 
   // Helper to format dates and times correctly for Bangladesh
   const formatDateTime = (dateString: string | null) => {
-    if (!dateString) return "N/A";
+    if (!dateString) return "In Progress";
     const date = parseISO(dateString);
     // Using date-fns-tz to format the time in the correct timezone
     return formatInTimeZone(date, "Asia/Dhaka", "hh:mm:ss a");

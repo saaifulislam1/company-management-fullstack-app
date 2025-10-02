@@ -74,11 +74,13 @@ export default function DashboardPage() {
         value={isLoading ? "..." : stats.pendingLeaves.toString()}
         icon={CalendarOff}
       />
-      <DashboardCard
-        title="Total Employees"
-        value={isLoading ? "..." : stats.employeeCount.toString()}
-        icon={Users}
-      />
+      <Link href={"/employees"}>
+        <DashboardCard
+          title="Total Employees"
+          value={isLoading ? "..." : stats.employeeCount.toString()}
+          icon={Users}
+        />
+      </Link>
       {/* Add more admin-specific cards here */}
     </>
   );

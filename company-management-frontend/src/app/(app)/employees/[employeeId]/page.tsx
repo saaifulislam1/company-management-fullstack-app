@@ -24,9 +24,18 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { getFullEmployeeDetails } from "@/services/employeeService";
-import { Clock, Phone, Home, AlertTriangle, CalendarDays } from "lucide-react";
+import {
+  Clock,
+  Phone,
+  Home,
+  AlertTriangle,
+  CalendarDays,
+  User,
+  Siren,
+} from "lucide-react";
 import Link from "next/link";
 import { StatCard } from "@/components/shared/StatCard";
+
 import {
   Dialog,
   DialogContent,
@@ -188,21 +197,23 @@ export default function EmployeeDetailPage() {
           </h1>
           <Link href={`/employees/${employeeData.id}/analytics`}>
             <Button variant="outline" className="mt-4">
-              <BarChartHorizontalBig className="mr-2 h-4 w-4" />
+              <BarChartHorizontalBig className="mr-2 h-4 w-4 text-[20px]" />
               View Detailed Analytics
             </Button>
           </Link>
-          <p className="text-[14px] text-muted-foreground pt-1">
+          <p className="text-[18px] text-muted-foreground pt-1">
             {employeeData.email}
           </p>
           <div className="mt-2 flex items-center gap-4">
-            <Badge variant="outline">{employeeData.role}</Badge>
-            <Badge variant="secondary">
+            <Badge variant="outline" className="text-[14px]">
+              Role: {employeeData.role}
+            </Badge>
+            <Badge variant="secondary" className="text-[14px]">
               Department: {profile?.department || "N/A"}
             </Badge>
             <div>
               {manager?.profile ? (
-                <Badge variant="secondary">
+                <Badge variant="secondary" className="text-[14px]">
                   Reporting Manager:
                   <Link
                     href={`/employees/${manager.id}`}
@@ -212,7 +223,11 @@ export default function EmployeeDetailPage() {
                   </Link>
                 </Badge>
               ) : (
-                "N/A"
+                <Badge variant="secondary">
+                  <h4 className="font-semibold text-[14px]  hover:underline ">
+                    No manager assigned
+                  </h4>
+                </Badge>
               )}
             </div>
           </div>
@@ -287,6 +302,12 @@ export default function EmployeeDetailPage() {
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div className="flex items-center">
+              <User className="mr-3 h-4 w-4 text-muted-foreground" />{" "}
+              {profile?.firstName || "Not provided"}{" "}
+              {profile?.lastName || "Not provided"}
+            </div>
+
+            <div className="flex items-center">
               <Phone className="mr-3 h-4 w-4 text-muted-foreground" />{" "}
               {profile?.phone || "Not provided"}
             </div>
@@ -295,7 +316,7 @@ export default function EmployeeDetailPage() {
               {profile?.address || "Not provided"}
             </div>
             <div className="flex items-center">
-              <AlertTriangle className="mr-3 h-4 w-4 text-muted-foreground" />{" "}
+              <Siren className="mr-3 h-4 w-4 text-muted-foreground" />{" "}
               {profile?.emergencyContact || "Not provided"}
             </div>
             <div className="flex items-center">
