@@ -24,3 +24,22 @@ export const updateProfileSchema = z.object({
     managerId: z.string().optional(),
   }),
 });
+
+export const adminUpdateEmployeeSchema = z.object({
+  body: z.object({
+    // Employee model fields
+    email: z.string().email().optional(),
+    role: z.nativeEnum(UserRole).optional(),
+    managerId: z.string().nullable().optional(), // Can be set to null
+
+    // Profile model fields
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
+    phone: z.string().optional(),
+    address: z.string().optional(),
+    emergencyContact: z.string().optional(),
+    department: z.nativeEnum(Department).optional(),
+    vacationBalance: z.number().min(0).optional(),
+    sickLeaveBalance: z.number().min(0).optional(),
+  }),
+});

@@ -3,6 +3,7 @@ import { validate } from '@/middleware/validate';
 import { protect } from '@/middleware/auth';
 import { authorize } from '@/middleware/role';
 import {
+  adminUpdateEmployeeSchema,
   registerEmployeeSchema,
   updateProfileSchema,
 } from './employee.validator';
@@ -56,7 +57,7 @@ router
   .patch(
     protect,
     authorize('ADMIN', 'HR'),
-    validate(updateProfileSchema),
+    validate(adminUpdateEmployeeSchema),
     updateEmployeeProfileController,
   );
 

@@ -62,3 +62,8 @@ export const assignManager = async (employeeId: string, managerId: string) => {
   const response = await api.patch(`/employees/${employeeId}`, { managerId });
   return response.data.data;
 };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const updateEmployeeProfile = async (employeeId: string, data: any) => {
+  const response = await api.patch(`/employees/${employeeId}`, data);
+  return response.data.data;
+};

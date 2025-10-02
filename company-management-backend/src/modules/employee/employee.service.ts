@@ -91,47 +91,47 @@ export const findAllEmployees = async () => {
   return employees;
 };
 
-export const updateEmployeeProfile = async (
-  employeeId: string,
-  data: {
-    managerId?: string;
-    firstName?: string;
-    lastName?: string;
-    phone?: string;
-    address?: string;
-    // Add any other profile fields here
-  },
-) => {
-  // 1. Separate the managerId from the rest of the profile fields.
-  const { managerId, ...profileData } = data;
+// export const updateEmployeeProfile = async (
+//   employeeId: string,
+//   data: {
+//     managerId?: string;
+//     firstName?: string;
+//     lastName?: string;
+//     phone?: string;
+//     address?: string;
+//     // Add any other profile fields here
+//   },
+// ) => {
+//   // 1. Separate the managerId from the rest of the profile fields.
+//   const { managerId, ...profileData } = data;
 
-  // 2. Use the separated variables in the correct places in the query.
-  return prisma.employee.update({
-    where: { id: employeeId },
-    data: {
-      // `managerId` is updated directly on the Employee model.
-      managerId: managerId,
+//   // 2. Use the separated variables in the correct places in the query.
+//   return prisma.employee.update({
+//     where: { id: employeeId },
+//     data: {
+//       // `managerId` is updated directly on the Employee model.
+//       managerId: managerId,
 
-      // The rest of the data (`profileData`) is for the nested Profile model.
-      profile: {
-        upsert: {
-          // 'create' is used if no profile exists for this employee
-          create: {
-            firstName: profileData.firstName || 'New',
-            lastName: profileData.lastName || 'User',
-            dateOfJoining: new Date(),
-            ...profileData,
-          },
-          // 'update' is used if a profile already exists
-          update: profileData,
-        },
-      },
-    },
-    include: {
-      profile: true,
-    },
-  });
-};
+//       // The rest of the data (`profileData`) is for the nested Profile model.
+//       profile: {
+//         upsert: {
+//           // 'create' is used if no profile exists for this employee
+//           create: {
+//             firstName: profileData.firstName || 'New',
+//             lastName: profileData.lastName || 'User',
+//             dateOfJoining: new Date(),
+//             ...profileData,
+//           },
+//           // 'update' is used if a profile already exists
+//           update: profileData,
+//         },
+//       },
+//     },
+//     include: {
+//       profile: true,
+//     },
+//   });
+// };
 export const findEmployeeById = async (employeeId: string) => {
   const employee = await prisma.employee.findUnique({
     where: { id: employeeId },
@@ -328,6 +328,44 @@ export const findPotentialManagers = async () => {
           firstName: true,
           lastName: true,
           department: true,
+        },
+      },
+    },
+  });
+};
+export const updateEmployeeProfile = async (employeeId: string, data: any) => {
+  // 1. Separate fields belonging to the Employee model
+  const {
+    email,
+    role,
+    managerId,
+    // The rest of the data belongs to the Profile model
+    ...profileData
+  } = data;
+
+  // 2. Create an object with only the defined Employee fields
+  const employeeDataToUpdate: any = {};
+  if (email) employeeDataToUpdate.email = email;
+  if (role) employeeDataToUpdate.role = role;
+  if (managerId !== undefined) employeeDataToUpdate.managerId = managerId;
+
+  // 3. Perform the update
+  return prisma.employee.update({
+    where: { id: employeeId },
+    data: {
+      // Update Employee fields
+      ...employeeDataToUpdate,
+      // Update nested Profile fields
+      profile: {
+        update: profileData,
+      },
+    },
+    include: {
+      profile: true,
+      manager: {
+        select: {
+          id: true,
+          profile: { select: { firstName: true, lastName: true } },
         },
       },
     },
