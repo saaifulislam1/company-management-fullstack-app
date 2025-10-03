@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.login = void 0;
-const asyncHandler_1 = require("../../../utils/asyncHandler");
-const apiResponse_1 = require("../../../utils/apiResponse");
-const auth_service_1 = require("../services/auth.service");
+const asyncHandler_1 = require("../../utils/asyncHandler");
+const apiResponse_1 = require("../../utils/apiResponse");
+const auth_service_1 = require("./auth.service");
 /**
  * @controller login
  * @description Handles the employee login request.

@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getHistoryController = exports.checkOutController = exports.checkInController = void 0;
-const asyncHandler_1 = require("../../../utils/asyncHandler");
-const apiResponse_1 = require("../../../utils/apiResponse");
-const attendance_service_1 = require("../services/attendance.service");
+const asyncHandler_1 = require("../../utils/asyncHandler");
+const apiResponse_1 = require("../../utils/apiResponse");
+const attendance_service_1 = require("./attendance.service");
 exports.checkInController = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     const employeeId = req.employee.id;
     const attendance = await (0, attendance_service_1.checkIn)(employeeId);

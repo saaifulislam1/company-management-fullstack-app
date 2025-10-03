@@ -1,5 +1,10 @@
 //@ts-nocheck
-import { PrismaClient, Department, UserRole } from '@prisma/client';
+import {
+  PrismaClient,
+  Department,
+  UserRole,
+  LeaveStatus,
+} from '@prisma/client';
 import { hashPassword } from '../src/utils/password';
 import { faker } from '@faker-js/faker';
 import {
@@ -16,7 +21,7 @@ const prisma = new PrismaClient();
 // --- HELPER FUNCTIONS ---
 
 /** Generates a random time for a given date within a specified hour range. */
-const randomTime = (date: Date, startHour: number, endHour: number) => {
+const randomTime = (date: Date, startHour: number, endHour: number): Date => {
   const hour = faker.number.int({ min: startHour, max: endHour - 1 });
   const minute = faker.number.int({ min: 0, max: 59 });
   return setSeconds(setMinutes(setHours(date, hour), minute), 0);
@@ -25,118 +30,122 @@ const randomTime = (date: Date, startHour: number, endHour: number) => {
 // --- MAIN SEEDING LOGIC ---
 
 async function main() {
-  console.log(`🔥 Starting the seeding process...`);
+  console.log(`🔥 Starting the comprehensive seeding process...`);
 
   // 1. --- CLEAN UP THE DATABASE ---
-  // This ensures a fresh start every time you run the seed.
   console.log('🧹 Cleaning old data...');
-  // The order is important to avoid foreign key constraint errors.
   await prisma.attendance.deleteMany();
   await prisma.leave.deleteMany();
-  await prisma.employee.deleteMany({
-    where: {
-      email: { not: 'admin@example.com' }, // Keep the main admin if they exist
-    },
-  });
-  await prisma.profile.deleteMany({
-    where: {
-      employee: {
-        email: { not: 'admin@example.com' },
-      },
-    },
-  });
-  console.log('✅ Old data cleaned.');
+  await prisma.profile.deleteMany();
+  await prisma.employee.deleteMany();
+  console.log('✅ Old data cleaned successfully.');
 
-  // 2. --- DEFINE THE COMPANY STRUCTURE ---
-  // We'll create users and then link them in a second pass.
-  const usersToCreate = [
+  // 2. --- DEFINE THE COMPANY STRUCTURE (21 Employees) ---
+  const companyStructure = [
     // Top Level
     {
       email: 'admin@example.com',
       role: UserRole.ADMIN,
       department: Department.ADMIN,
-    },
-    // Managers reporting to Admin
-    {
-      email: 'manager.eng@example.com',
-      role: UserRole.MANAGER,
-      department: Department.ENGINEERING,
-      managerEmail: 'admin@example.com',
+      managerEmail: null,
+      firstName: 'Super',
+      lastName: 'Admin',
     },
     {
-      email: 'manager.hr@example.com',
+      email: 'hr.manager@example.com',
       role: UserRole.HR,
       department: Department.HR,
       managerEmail: 'admin@example.com',
+      firstName: 'Harriet',
+      lastName: 'Rosso',
     },
-    // Employees
+
+    // Managers
     {
-      email: 'dev1@example.com',
-      role: UserRole.EMPLOYEE,
-      department: Department.SOFTWARE,
-      managerEmail: 'manager.eng@example.com',
-    },
-    {
-      email: 'dev2@example.com',
-      role: UserRole.EMPLOYEE,
-      department: Department.SOFTWARE,
-      managerEmail: 'manager.eng@example.com',
-    },
-    {
-      email: 'qa1@example.com',
-      role: UserRole.EMPLOYEE,
+      email: 'eng.manager@example.com',
+      role: UserRole.MANAGER,
       department: Department.ENGINEERING,
-      managerEmail: 'manager.eng@example.com',
+      managerEmail: 'admin@example.com',
+      firstName: 'Edward',
+      lastName: 'Gineer',
     },
     {
-      email: 'hr1@example.com',
-      role: UserRole.EMPLOYEE,
-      department: Department.HR,
-      managerEmail: 'manager.hr@example.com',
-    },
-    {
-      email: 'sales1@example.com',
-      role: UserRole.EMPLOYEE,
+      email: 'sales.manager@example.com',
+      role: UserRole.MANAGER,
       department: Department.SALES,
       managerEmail: 'admin@example.com',
+      firstName: 'Sally',
+      lastName: 'Saleswoman',
     },
     {
-      email: 'marketing1@example.com',
-      role: UserRole.EMPLOYEE,
+      email: 'marketing.manager@example.com',
+      role: UserRole.MANAGER,
       department: Department.MARKETING,
       managerEmail: 'admin@example.com',
+      firstName: 'Mark',
+      lastName: 'Ketter',
     },
-    {
-      email: 'accountant1@example.com',
+
+    // Teams
+    ...Array.from({ length: 5 }, () => ({
+      email: faker.internet.email(),
+      role: UserRole.EMPLOYEE,
+      department: Department.SOFTWARE,
+      managerEmail: 'eng.manager@example.com',
+    })),
+    ...Array.from({ length: 2 }, () => ({
+      email: faker.internet.email(),
+      role: UserRole.EMPLOYEE,
+      department: Department.ENGINEERING,
+      managerEmail: 'eng.manager@example.com',
+    })),
+    ...Array.from({ length: 2 }, () => ({
+      email: faker.internet.email(),
+      role: UserRole.EMPLOYEE,
+      department: Department.HR,
+      managerEmail: 'hr.manager@example.com',
+    })),
+    ...Array.from({ length: 3 }, () => ({
+      email: faker.internet.email(),
+      role: UserRole.EMPLOYEE,
+      department: Department.SALES,
+      managerEmail: 'sales.manager@example.com',
+    })),
+    ...Array.from({ length: 2 }, () => ({
+      email: faker.internet.email(),
+      role: UserRole.EMPLOYEE,
+      department: Department.MARKETING,
+      managerEmail: 'marketing.manager@example.com',
+    })),
+    ...Array.from({ length: 2 }, () => ({
+      email: faker.internet.email(),
       role: UserRole.EMPLOYEE,
       department: Department.ACCOUNTING,
       managerEmail: 'admin@example.com',
-    },
+    })),
     {
-      email: 'intern1@example.com',
+      email: faker.internet.email(),
       role: UserRole.INTERN,
       department: Department.INTERN,
-      managerEmail: 'manager.eng@example.com',
+      managerEmail: 'eng.manager@example.com',
     },
   ];
 
   // 3. --- CREATE ALL EMPLOYEES AND PROFILES ---
-  console.log('Creating employee and profile records...');
-  const hashedPassword = await hashPassword('password1');
-  const createdEmployees = [];
+  console.log('👤 Creating employee and profile records...');
+  const hashedPassword = await hashPassword('password123');
+  const employeeMap = new Map<string, any>();
 
-  for (const userData of usersToCreate) {
-    const employee = await prisma.employee.upsert({
-      where: { email: userData.email },
-      update: {},
-      create: {
+  for (const userData of companyStructure) {
+    const employee = await prisma.employee.create({
+      data: {
         email: userData.email,
         password: hashedPassword,
         role: userData.role,
         profile: {
           create: {
-            firstName: faker.person.firstName(),
-            lastName: faker.person.lastName(),
+            firstName: userData.firstName || faker.person.firstName(),
+            lastName: userData.lastName || faker.person.lastName(),
             department: userData.department,
             dateOfJoining: faker.date.past({ years: 3 }),
             vacationBalance: 20,
@@ -145,17 +154,18 @@ async function main() {
         },
       },
     });
-    createdEmployees.push({ ...employee, managerEmail: userData.managerEmail });
+    employeeMap.set(employee.email, {
+      ...employee,
+      managerEmail: userData.managerEmail,
+    });
   }
-  console.log(`✅ ${createdEmployees.length} employees created.`);
+  console.log(`✅ ${employeeMap.size} employees created.`);
 
-  // 4. --- LINK MANAGERS TO EMPLOYEES ---
-  console.log('Linking managers to subordinates...');
-  for (const employee of createdEmployees) {
+  // 4. --- LINK MANAGERS TO SUBORDINATES ---
+  console.log('🔗 Linking manager hierarchy...');
+  for (const employee of employeeMap.values()) {
     if (employee.managerEmail) {
-      const manager = await prisma.employee.findUnique({
-        where: { email: employee.managerEmail },
-      });
+      const manager = employeeMap.get(employee.managerEmail);
       if (manager) {
         await prisma.employee.update({
           where: { id: employee.id },
@@ -166,31 +176,40 @@ async function main() {
   }
   console.log('✅ Manager hierarchy linked.');
 
-  // 5. --- GENERATE REALISTIC DATA FOR EACH EMPLOYEE ---
-  console.log('Generating attendance and leave records for all employees...');
-  const allEmployees = await prisma.employee.findMany();
-  let totalAttendance = 0;
-  let totalLeaves = 0;
+  // 5. --- GENERATE DATA FOR EACH EMPLOYEE ---
+  console.log(
+    '📊 Generating attendance and leave records for all employees (this may take a moment)...',
+  );
+  const allEmployeesWithManager = await prisma.employee.findMany();
 
-  for (const employee of allEmployees) {
+  for (const employee of allEmployeesWithManager) {
     const leaveRecordsToCreate = [];
     const attendanceRecordsToCreate = [];
     const datesWithLeave = new Set<string>();
     const today = new Date();
 
-    // Generate ~5 leave requests per employee for the last year
-    for (let i = 0; i < 5; i++) {
-      const startDate = faker.date.past({ months: 12 });
+    // Generate ~10 leave requests per employee over the last 2 years
+    for (let i = 0; i < 10; i++) {
+      const startDate = faker.date.past({ years: 2 });
       const leaveDuration = faker.number.int({ min: 1, max: 4 });
       const endDate = addDays(startDate, leaveDuration);
-      const status = faker.helpers.arrayElement([
-        'APPROVED',
-        'PENDING',
-        'REJECTED',
-      ] as const);
 
-      // If leave is approved, block out those dates for attendance
-      if (status === 'APPROVED') {
+      const managerStatus = faker.helpers.arrayElement([
+        LeaveStatus.APPROVED,
+        LeaveStatus.PENDING,
+        LeaveStatus.REJECTED,
+      ]);
+      // Admin only acts if manager approved
+      const adminStatus =
+        managerStatus === 'APPROVED'
+          ? faker.helpers.arrayElement([
+              LeaveStatus.APPROVED,
+              LeaveStatus.REJECTED,
+              null,
+            ])
+          : null;
+
+      if (adminStatus === 'APPROVED') {
         for (let d = 0; d <= leaveDuration; d++) {
           datesWithLeave.add(format(addDays(startDate, d), 'yyyy-MM-dd'));
         }
@@ -201,12 +220,14 @@ async function main() {
         startDate,
         endDate,
         reason: faker.lorem.sentence(),
-        status,
+        managerStatus,
+        adminStatus,
+        approvedById: employee.managerId,
       });
     }
 
-    // Generate attendance for the last ~6 months (approx 180 days)
-    for (let i = 0; i < 180; i++) {
+    // Generate attendance for the last 2 years (730 days)
+    for (let i = 0; i < 730; i++) {
       const date = subDays(today, i);
       const dateString = format(date, 'yyyy-MM-dd');
       const dayOfWeek = date.getDay();
@@ -216,14 +237,14 @@ async function main() {
         dayOfWeek === 6 ||
         dayOfWeek === 0 ||
         datesWithLeave.has(dateString) ||
-        Math.random() < 0.15
+        Math.random() < 0.1
       ) {
         continue;
       }
 
       // Simulate 1 to 3 work sessions per day
       const sessions = faker.number.int({ min: 1, max: 3 });
-      let lastCheckOut = randomTime(date, 9, 10); // First check-in
+      let lastCheckOut = randomTime(date, 9, 10);
 
       for (let j = 0; j < sessions; j++) {
         const checkIn = lastCheckOut;
@@ -235,7 +256,6 @@ async function main() {
         const checkOut = new Date(
           checkIn.getTime() + workDurationHours * 60 * 60 * 1000,
         );
-
         attendanceRecordsToCreate.push({
           employeeId: employee.id,
           checkIn,
@@ -244,22 +264,23 @@ async function main() {
         });
 
         const breakDurationMs =
-          faker.number.int({ min: 30, max: 90 }) * 60 * 1000;
+          faker.number.int({ min: 30, max: 75 }) * 60 * 1000;
         lastCheckOut = new Date(checkOut.getTime() + breakDurationMs);
       }
     }
 
-    // Create records for the current employee
-    await prisma.leave.createMany({ data: leaveRecordsToCreate });
-    await prisma.attendance.createMany({ data: attendanceRecordsToCreate });
-    totalLeaves += leaveRecordsToCreate.length;
-    totalAttendance += attendanceRecordsToCreate.length;
+    await prisma.leave.createMany({
+      data: leaveRecordsToCreate,
+      skipDuplicates: true,
+    });
+    await prisma.attendance.createMany({
+      data: attendanceRecordsToCreate,
+      skipDuplicates: true,
+    });
   }
 
-  console.log(`✅ Seeding finished successfully!`);
-  console.log(`- Total Employees: ${allEmployees.length}`);
-  console.log(`- Total Leave Records: ${totalLeaves}`);
-  console.log(`- Total Attendance Records: ${totalAttendance}`);
+  console.log(`\n🎉 Seeding finished successfully!`);
+  console.log(`- Default Password for all users: "password123"`);
 }
 
 main()

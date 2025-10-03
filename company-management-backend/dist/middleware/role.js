@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authorize = void 0;
-const apiError_1 = require("@/utils/apiError");
+const apiError_1 = require("../utils/apiError");
 /**
  * @middleware authorize
  * @description This is a higher-order function that creates a role-checking middleware.

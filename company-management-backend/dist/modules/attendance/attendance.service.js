@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getAttendanceHistory = exports.checkOut = exports.checkIn = void 0;
-const client_1 = require("../../../prisma/client");
-const apiError_1 = require("../../../utils/apiError");
+const client_1 = require("../../prisma/client");
+const apiError_1 = require("../../utils/apiError");
 const date_fns_1 = require("date-fns");
 /**
  * @async

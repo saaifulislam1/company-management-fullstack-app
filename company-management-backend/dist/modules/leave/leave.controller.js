@@ -33,10 +33,10 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateStatusController = exports.getAllRequestsController = exports.getHistoryController = exports.applyLeaveController = void 0;
-const asyncHandler_1 = require("../../../utils/asyncHandler");
-const apiResponse_1 = require("../../../utils/apiResponse");
-const leaveService = __importStar(require("../services/leave.service"));
+exports.adminUpdateStatusController = exports.managerUpdateStatusController = exports.getTeamRequestsController = exports.getAllRequestsController = exports.getHistoryController = exports.applyLeaveController = void 0;
+const asyncHandler_1 = require("../../utils/asyncHandler");
+const apiResponse_1 = require("../../utils/apiResponse");
+const leaveService = __importStar(require("./leave.service"));
 exports.applyLeaveController = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     const leave = await leaveService.applyForLeave(req.employee.id, req.body);
     res
@@ -49,17 +49,37 @@ exports.getHistoryController = (0, asyncHandler_1.asyncHandler)(async (req, res)
         .status(200)
         .json(new apiResponse_1.ApiResponse(200, history, 'Leave history fetched'));
 });
+// For Admins to get requests approved by managers
 exports.getAllRequestsController = (0, asyncHandler_1.asyncHandler)(async (_req, res) => {
     const requests = await leaveService.getAllLeaveRequests();
     res
         .status(200)
         .json(new apiResponse_1.ApiResponse(200, requests, 'All leave requests fetched'));
 });
-exports.updateStatusController = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
-    const { leaveId } = req.params;
-    const { status } = req.body;
-    const updatedRequest = await leaveService.updateLeaveStatus(leaveId, status);
+// For Managers to get requests from their team
+exports.getTeamRequestsController = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
+    const managerId = req.employee.id;
+    const requests = await leaveService.getTeamLeaveRequests(managerId);
     res
         .status(200)
-        .json(new apiResponse_1.ApiResponse(200, updatedRequest, 'Leave status updated'));
+        .json(new apiResponse_1.ApiResponse(200, requests, 'Team leave requests fetched.'));
+});
+// For Managers to update their team's requests
+exports.managerUpdateStatusController = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
+    const managerId = req.employee.id;
+    const { leaveId } = req.params;
+    const { status } = req.body;
+    const updatedRequest = await leaveService.managerUpdateLeaveStatus(leaveId, managerId, status);
+    res
+        .status(200)
+        .json(new apiResponse_1.ApiResponse(200, updatedRequest, 'Leave status updated by manager'));
+});
+// For Admins to make the final update
+exports.adminUpdateStatusController = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
+    const { leaveId } = req.params;
+    const { status } = req.body;
+    const updatedRequest = await leaveService.adminUpdateLeaveStatus(leaveId, status);
+    res
+        .status(200)
+        .json(new apiResponse_1.ApiResponse(200, updatedRequest, 'Leave status updated by admin'));
 });

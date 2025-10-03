@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateEmployeeProfile = exports.getEmployeeProfile = exports.registerEmployee = void 0;
-const client_1 = require("@/prisma/client");
-const apiError_1 = require("@/utils/apiError");
-const password_1 = require("@/utils/password");
+const client_1 = require("../../../prisma/client");
+const apiError_1 = require("../../../utils/apiError");
+const password_1 = require("../../../utils/password");
 /**
  * @async
  * @function registerEmployee

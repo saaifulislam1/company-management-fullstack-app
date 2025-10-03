@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const auth_1 = require("../../../middleware/auth");
-const attendance_controller_1 = require("../controllers/attendance.controller");
+const auth_1 = require("../../middleware/auth");
+const attendance_controller_1 = require("./attendance.controller");
 const router = (0, express_1.Router)();
 // All attendance routes require the user to be logged in
 router.use(auth_1.protect);

@@ -1,10 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.protect = void 0;
-const apiError_1 = require("@/utils/apiError");
-const asyncHandler_1 = require("@/utils/asyncHandler");
-const jwt_1 = require("@/utils/jwt");
-const client_1 = require("@/prisma/client");
+const apiError_1 = require("../utils/apiError");
+const asyncHandler_1 = require("../utils/asyncHandler");
+const jwt_1 = require("../utils/jwt");
+const client_1 = require("../prisma/client");
 /**
  * @middleware protect
  * @description This middleware performs authentication.

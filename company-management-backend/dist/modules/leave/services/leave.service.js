@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateLeaveStatus = exports.getAllLeaveRequests = exports.getLeaveHistory = exports.applyForLeave = void 0;
-const client_1 = require("@/prisma/client");
-const apiError_1 = require("@/utils/apiError");
+const client_1 = require("../../../prisma/client");
+const apiError_1 = require("../../../utils/apiError");
 const applyForLeave = async (employeeId, data) => {
     return client_1.prisma.leave.create({
         data: {

@@ -34,11 +34,11 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const auth_1 = require("../../../middleware/auth");
-const role_1 = require("../../../middleware/role");
-const validate_1 = require("../../../middleware/validate");
-const validator = __importStar(require("../validators/leave.validator"));
-const controller = __importStar(require("../controllers/leave.controller"));
+const auth_1 = require("../../middleware/auth");
+const role_1 = require("../../middleware/role");
+const validate_1 = require("../../middleware/validate");
+const validator = __importStar(require("./leave.validator"));
+const controller = __importStar(require("./leave.controller"));
 const router = (0, express_1.Router)();
 // All leave routes are protected
 router.use(auth_1.protect);
@@ -47,5 +47,7 @@ router.post('/apply', (0, validate_1.validate)(validator.applyLeaveSchema), cont
 router.get('/history', controller.getHistoryController);
 // Admin/HR routes
 router.get('/requests', (0, role_1.authorize)('ADMIN', 'HR'), controller.getAllRequestsController);
-router.patch('/requests/:leaveId', (0, role_1.authorize)('ADMIN', 'HR'), (0, validate_1.validate)(validator.updateLeaveStatusSchema), controller.updateStatusController);
+router.get('/team-requests', auth_1.protect, controller.getTeamRequestsController);
+router.patch('/team-requests/:leaveId', auth_1.protect, (0, validate_1.validate)(validator.updateLeaveStatusSchema), controller.managerUpdateStatusController);
+router.patch('/requests/:leaveId', (0, role_1.authorize)('ADMIN', 'HR'), (0, validate_1.validate)(validator.updateLeaveStatusSchema), controller.adminUpdateStatusController);
 exports.default = router;
