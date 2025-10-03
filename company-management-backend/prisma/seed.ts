@@ -122,7 +122,7 @@ async function main() {
 
   // 3. --- CREATE ALL EMPLOYEES AND PROFILES ---
   console.log('Creating employee and profile records...');
-  const hashedPassword = await hashPassword('password123');
+  const hashedPassword = await hashPassword('password1');
   const createdEmployees = [];
 
   for (const userData of usersToCreate) {
