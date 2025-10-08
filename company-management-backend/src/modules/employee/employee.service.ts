@@ -5,9 +5,10 @@ import { Prisma, Profile } from '@prisma/client';
 import { startOfMonth, endOfMonth, startOfDay, endOfDay } from 'date-fns';
 import { formatDuration } from '@/utils/formatDuration';
 import { getYear, getMonth, getWeek, format } from 'date-fns';
+import { redis } from '@/config/redis';
 
 export const registerEmployee = async (data: any) => {
-  // 1. Check if an employee with this email already exists
+  // Check if an employee with this email already exists
   const existingEmployee = await prisma.employee.findUnique({
     where: { email: data.email },
   });
@@ -15,17 +16,16 @@ export const registerEmployee = async (data: any) => {
     throw new ApiError(409, 'An employee with this email already exists.');
   }
 
-  // 2. Hash the password
+  // Hash the password
   const hashedPassword = await hashPassword(data.password);
 
-  // 3. Use a Prisma transaction to ensure both records are created or neither is.
-  // This maintains data integrity. If creating the profile fails, the employee record will be rolled back.
   const newEmployee = await prisma.$transaction(async (tx) => {
     const employee = await tx.employee.create({
       data: {
         email: data.email,
         password: hashedPassword,
         role: data.role,
+        managerId: data.managerId, // 2. Assign managerId if provided
       },
     });
 
@@ -35,18 +35,24 @@ export const registerEmployee = async (data: any) => {
         lastName: data.lastName,
         dateOfJoining: data.dateOfJoining,
         department: data.department,
-        employeeId: employee.id, // Link the profile to the new employee
+        employeeId: employee.id,
       },
     });
 
     return employee;
   });
 
-  // 4. Return the new employee, omitting the password for security
+  // 3. Invalidate the cache for the 'All Employees' list
+  try {
+    await redis.del('employees:all');
+    console.log('CACHE INVALIDATED: Cleared employees:all');
+  } catch (error) {
+    console.error('Redis cache invalidation error:', error);
+  }
+
   const { password: _, ...employeeWithoutPassword } = newEmployee;
   return employeeWithoutPassword;
 };
-
 export const getEmployeeProfile = async (employeeId: string) => {
   const employee = await prisma.employee.findUnique({
     where: { id: employeeId },
@@ -74,23 +80,47 @@ export const getEmployeeProfile = async (employeeId: string) => {
 };
 
 export const findAllEmployees = async () => {
+  // 1. Define a unique key for this cache entry
+  const cacheKey = 'employees:all';
+
+  // 2. Check the Redis cache first
+  try {
+    const cachedEmployees = await redis.get(cacheKey);
+    if (cachedEmployees) {
+      console.log('CACHE HIT: Serving from Redis');
+      // If data is found in the cache, parse it and return it immediately
+      return JSON.parse(cachedEmployees);
+    }
+  } catch (error) {
+    console.error('Redis cache read error:', error);
+  }
+
+  // 3. If no cache exists (a "cache miss"), query the database
+  console.log('CACHE MISS: Serving from PostgreSQL');
   const employees = await prisma.employee.findMany({
-    // Using 'select' to explicitly exclude the password field for security
     select: {
       id: true,
       email: true,
       role: true,
-      createdAt: true,
-      updatedAt: true,
-      profile: true, // Include the employee's profile information
+      profile: true,
     },
     orderBy: {
-      createdAt: 'desc',
+      profile: {
+        firstName: 'asc',
+      },
     },
   });
+
+  // 4. Store the fresh data in Redis with an expiration time
+  // 'EX 300' sets the cache to expire in 300 seconds (5 minutes).
+  try {
+    await redis.set(cacheKey, JSON.stringify(employees), 'EX', 300);
+  } catch (error) {
+    console.error('Redis cache write error:', error);
+  }
+
   return employees;
 };
-
 // export const updateEmployeeProfile = async (
 //   employeeId: string,
 //   data: {
