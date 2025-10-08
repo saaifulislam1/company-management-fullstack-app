@@ -5,7 +5,13 @@ import { format, parseISO } from "date-fns";
 import toast from "react-hot-toast";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -26,6 +32,13 @@ import { RegisterEmployeeForm } from "@/components/shared/RegisterEmployeeForm";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationNext,
+} from "@/components/ui/pagination";
 
 // Define the shape of the employee data we expect
 interface EmployeeData {
@@ -38,9 +51,10 @@ interface EmployeeData {
     dateOfJoining: string;
   } | null;
 }
-
+const ITEMS_PER_PAGE = 8;
 export default function AllEmployeesPage() {
   const [employees, setEmployees] = useState<EmployeeData[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -60,6 +74,9 @@ export default function AllEmployeesPage() {
   useEffect(() => {
     fetchEmployees();
   }, []);
+  useEffect(() => {
+    setCurrentPage(1); // Reset to the first page whenever the search term changes
+  }, [searchTerm]);
   const filteredEmployees = useMemo(() => {
     if (!searchTerm) {
       return employees; // If search is empty, return all employees
@@ -76,6 +93,17 @@ export default function AllEmployeesPage() {
       );
     });
   }, [employees, searchTerm]);
+
+  // --- 3. Create a paginated list from the filtered list ---
+  const { paginatedEmployees, totalPages } = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+
+    const paginated = filteredEmployees.slice(startIndex, endIndex);
+    const total = Math.ceil(filteredEmployees.length / ITEMS_PER_PAGE);
+
+    return { paginatedEmployees: paginated, totalPages: total };
+  }, [filteredEmployees, currentPage]);
 
   return (
     <div className="space-y-6">
@@ -128,7 +156,8 @@ export default function AllEmployeesPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredEmployees.map((employee) => (
+                // filteredEmployees.map((employee) => (
+                paginatedEmployees.map((employee) => (
                   <TableRow key={employee.id}>
                     <TableCell className="font-medium">
                       <Link
@@ -156,6 +185,41 @@ export default function AllEmployeesPage() {
             </TableBody>
           </Table>
         </CardContent>
+        <CardFooter>
+          <div className="text-xs text-muted-foreground">
+            Page {currentPage} of {totalPages}
+          </div>
+          <Pagination className="ml-auto mr-0 w-auto">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  // Disable the button if on the first page
+                  className={
+                    currentPage === 1
+                      ? "pointer-events-none opacity-50"
+                      : undefined
+                  }
+                />
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  // Disable the button if on the last page
+                  className={
+                    currentPage === totalPages
+                      ? "pointer-events-none opacity-50"
+                      : undefined
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </CardFooter>
       </Card>
     </div>
   );

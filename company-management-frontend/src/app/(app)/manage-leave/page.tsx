@@ -34,7 +34,6 @@ import { Info } from "lucide-react";
 import {
   getAllLeaveRequests,
   adminUpdateLeaveStatus,
-  LeaveRecord,
   LeaveRecordWithEmployee,
 } from "@/services/leaveService";
 
