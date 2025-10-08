@@ -4,6 +4,7 @@ import { asyncHandler } from '@/utils/asyncHandler';
 import { verifyToken } from '@/utils/jwt';
 import { prisma } from '@/prisma/client';
 import { Employee } from '@prisma/client';
+import { redis } from '@/config/redis';
 
 // We extend the default Express Request type to include our 'employee' property.
 // This gives us type safety and autocompletion in our controllers.
@@ -23,7 +24,7 @@ export const protect = asyncHandler(
   async (req: AuthRequest, _res: Response, next: NextFunction) => {
     let token;
 
-    // Check for the token in the Authorization header
+    // 1. Extract the token from the Authorization header
     if (
       req.headers.authorization &&
       req.headers.authorization.startsWith('Bearer')
@@ -35,29 +36,29 @@ export const protect = asyncHandler(
       throw new ApiError(401, 'Not authorized. No token provided.');
     }
 
-    // Verify the token using our utility function
+    // 2. Verify the JWT and get the decoded payload
     const decoded = verifyToken(token);
-    if (!decoded) {
-      throw new ApiError(401, 'Not authorized. Token is invalid or expired.');
+    if (!decoded || !decoded.sessionId) {
+      throw new ApiError(401, 'Not authorized, token is invalid.');
     }
 
-    // Find the employee in the database using the ID from the token payload.
-    // This ensures the user still exists.
-    const currentEmployee = await prisma.employee.findUnique({
-      where: { id: decoded.id },
-    });
+    // --- THIS IS THE NEW LOGIC ---
+    // 3. Look up the session in Redis using the sessionId from the token
+    const sessionData = await redis.get(`session:${decoded.sessionId}`);
 
-    if (!currentEmployee) {
+    // 4. If the session does not exist in Redis, the user is not authenticated
+    if (!sessionData) {
       throw new ApiError(
         401,
-        'The user belonging to this token no longer exists.',
+        'Session expired or invalid. Please log in again.',
       );
     }
 
-    // Attach the employee object to the request
-    req.employee = currentEmployee;
+    // 5. Parse the user data from the session and attach it to the request
+    const employee = JSON.parse(sessionData);
+    req.employee = employee;
 
-    // Grant access to the protected route
     next();
+    // --- END NEW LOGIC ---
   },
 );

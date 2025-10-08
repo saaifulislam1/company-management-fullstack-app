@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { validate } from '@/middleware/validate';
 import { loginSchema } from './auth.validator';
-import { login } from './auth.controller';
+import { login, logout } from './auth.controller';
 
 const router = Router();
 
@@ -9,5 +9,6 @@ const router = Router();
 // 1. It first runs the 'validate' middleware with our 'loginSchema'.
 // 2. If validation passes, it then calls the 'login' controller.
 router.post('/login', validate(loginSchema), login);
+router.post('/logout', logout);
 
 export default router;

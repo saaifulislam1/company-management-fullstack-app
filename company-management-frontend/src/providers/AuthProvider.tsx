@@ -3,7 +3,7 @@
 import React, { createContext, useState, useEffect, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 // Import our new auth services
-import { getMyProfile } from "@/services/authService";
+import { getMyProfile, logout as apiLogout } from "@/services/authService";
 
 // ... (User and AuthContextType interfaces remain the same) ...
 interface User {
@@ -18,7 +18,7 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   login: (token: string, user: User) => void;
-  logout: () => void;
+  // logout: () => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(
@@ -62,11 +62,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("authToken", newToken);
   };
 
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem("authToken");
-    router.push("/login");
+  const logout = async () => {
+    try {
+      // --- THIS IS THE CHANGE ---
+      // Call the backend to invalidate the session in Redis
+      await apiLogout();
+    } catch (error) {
+      console.error("Logout API call failed", error);
+    } finally {
+      // Always clear local state and storage regardless of API call success
+      setToken(null);
+      setUser(null);
+      localStorage.removeItem("authToken");
+      router.push("/login");
+    }
   };
 
   const value = { user, token, isLoading, login, logout };

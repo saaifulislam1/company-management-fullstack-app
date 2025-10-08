@@ -22,3 +22,8 @@ export const getMyProfile = async () => {
   const response = await api.get("/employees/me");
   return response.data;
 };
+export const logout = async () => {
+  // const response = await api.post("/auth/logout");
+  // return response.data;
+  await api.post("/auth/logout");
+};

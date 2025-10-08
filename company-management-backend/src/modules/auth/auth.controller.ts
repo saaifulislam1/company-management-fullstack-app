@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import { asyncHandler } from '@/utils/asyncHandler';
 import { ApiResponse } from '@/utils/apiResponse';
-import { loginEmployee } from './auth.service';
+import { loginEmployee, logoutEmployee } from './auth.service';
+import { AuthRequest } from '@/middleware/auth';
+import { verifyToken } from '@/utils/jwt';
 
 /**
  * @controller login
@@ -24,4 +26,15 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
         'Employee logged in successfully',
       ),
     );
+});
+
+export const logout = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  const decoded = token ? verifyToken(token) : null;
+
+  if (decoded?.sessionId) {
+    await logoutEmployee(decoded.sessionId);
+  }
+
+  res.status(200).json(new ApiResponse(200, null, 'Logged out successfully'));
 });

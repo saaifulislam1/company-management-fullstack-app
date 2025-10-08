@@ -1,29 +1,17 @@
 // @ts-nocheck
 import jwt from 'jsonwebtoken';
 import { UserRole } from '@prisma/client';
+import config from '../config'; // <-- Add this line
 
-/**
- * @function generateToken
- * @description Generates a JSON Web Token (JWT).
- * @param {string} employeeId - The ID of the employee.
- * @param {UserRole} role - The role of the employee.
- * @returns {string} The generated JWT.
- */
-export const generateToken = (employeeId: string, role: UserRole): string => {
+export const generateToken = (payload: object): string => {
   const secret = process.env.JWT_SECRET as string;
   const expiresIn = process.env.JWT_EXPIRES_IN as string;
 
-  return jwt.sign({ id: employeeId, role }, secret, {
-    expiresIn,
+  return jwt.sign(payload, config.jwtSecret, {
+    expiresIn: config.jwtExpiresIn,
   });
 };
 
-/**
- * @function verifyToken
- * @description Verifies a JWT.
- * @param {string} token - The JWT to verify.
- * @returns {any | null} The decoded payload if the token is valid, otherwise null.
- */
 export const verifyToken = (token: string): any => {
   try {
     const secret = process.env.JWT_SECRET as string;

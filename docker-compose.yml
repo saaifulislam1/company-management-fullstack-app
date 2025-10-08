@@ -18,6 +18,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis: # <-- Add this new dependency
+        condition: service_started
   prisma-studio:
     build:
       context: ./company-management-backend
@@ -44,6 +46,12 @@ services:
       - "3000:3000"
     depends_on:
       - backend
+
+  redis:
+    image: redis:7-alpine
+    container_name: cms-redis
+    ports:
+      - "6379:6379"
 
   # The Database Service
   db:
