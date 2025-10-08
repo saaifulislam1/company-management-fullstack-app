@@ -83,3 +83,23 @@ export const adminUpdateStatusController = asyncHandler(
       );
   },
 );
+export const getLeaveByIdController = asyncHandler(async (req, res) => {
+  const { leaveId } = req.params;
+  const leave = await leaveService.getLeaveById(leaveId);
+  res.status(200).json(new ApiResponse(200, leave, 'Leave details fetched'));
+});
+
+export const employeeUpdateLeaveController = asyncHandler(
+  async (req: AuthRequest, res) => {
+    const { leaveId } = req.params;
+    const employeeId = req.employee!.id;
+    const updatedLeave = await leaveService.employeeUpdateLeave(
+      leaveId,
+      employeeId,
+      req.body,
+    );
+    res
+      .status(200)
+      .json(new ApiResponse(200, updatedLeave, 'Leave request updated'));
+  },
+);

@@ -53,16 +53,21 @@ const formSchema = z.object({
 interface LeaveApplicationFormProps {
   onSuccess: () => void;
   onClose: () => void;
+  initialData?: Partial<leaveService.LeaveApplicationData>; // Optional data to pre-fill the form
+  leaveId?: string; // Optional ID of the leave to edit
 }
 
 export function LeaveApplicationForm({
   onSuccess,
   onClose,
+  initialData,
+  leaveId,
 }: LeaveApplicationFormProps) {
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    defaultValues: initialData || { leaveType: "VACATION" },
   });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,8 +99,25 @@ export function LeaveApplicationForm({
         }
       });
 
-      await leaveService.applyForLeave(formData);
-      toast("Your leave request has been submitted.");
+      const isEditMode = !!leaveId;
+
+      // Choose the correct API function based on the mode
+      const apiCall = isEditMode
+        ? leaveService.employeeUpdateLeave(leaveId, values)
+        : leaveService.applyForLeave(formData);
+      toast.promise(apiCall, {
+        loading: isEditMode ? "Updating request..." : "Submitting request...",
+        success: () => {
+          onSuccess(); // Refresh data on parent page
+          onClose(); // Close the dialog
+          return `Leave request ${
+            isEditMode ? "updated" : "submitted"
+          } successfully!`;
+        },
+        error: (err) =>
+          err.response?.data?.message ||
+          `Failed to ${isEditMode ? "update" : "submit"} request.`,
+      });
       onSuccess(); // Trigger data refresh on the parent page
       onClose(); // Close the dialog
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -260,7 +282,13 @@ export function LeaveApplicationForm({
             Cancel
           </Button>
           <Button type="submit" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? "Submitting..." : "Submit Request"}
+            {form.formState.isSubmitting
+              ? leaveId
+                ? "Saving..."
+                : "Submitting..."
+              : leaveId
+              ? "Save Changes"
+              : "Submit Request"}
           </Button>
         </div>
       </form>

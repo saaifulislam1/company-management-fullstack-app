@@ -154,3 +154,47 @@ export const adminUpdateLeaveStatus = async (
 
   return updatedLeave;
 };
+
+export const getLeaveById = async (leaveId: string) => {
+  const leave = await prisma.leave.findUnique({
+    where: { id: leaveId },
+    include: {
+      employee: {
+        include: { profile: true },
+      },
+    },
+  });
+  if (!leave) {
+    throw new ApiError(404, 'Leave request not found');
+  }
+  return leave;
+};
+
+/**
+ * Allows an employee to edit their own PENDING leave request.
+ */
+export const employeeUpdateLeave = async (
+  leaveId: string,
+  employeeId: string,
+  data: any,
+) => {
+  const leave = await prisma.leave.findUnique({ where: { id: leaveId } });
+
+  // Security Check: Ensure the user owns this leave and it's still pending
+  if (!leave || leave.employeeId !== employeeId) {
+    throw new ApiError(403, 'You are not authorized to edit this request.');
+  }
+  if (leave.managerStatus !== 'PENDING') {
+    throw new ApiError(400, 'This leave request can no longer be edited.');
+  }
+
+  return prisma.leave.update({
+    where: { id: leaveId },
+    data: {
+      leaveType: data.leaveType,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      reason: data.reason,
+    },
+  });
+};

@@ -34,10 +34,12 @@ import { Info } from "lucide-react";
 import * as leaveService from "@/services/leaveService";
 import type { LeaveRecord } from "@/services/leaveService";
 import { LeaveApplicationForm } from "@/components/shared/LeaveApplicationForm";
+import { useRouter } from "next/navigation";
 
 type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED";
 
 export default function LeavePage() {
+  const router = useRouter();
   const [history, setHistory] = useState<LeaveRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -119,7 +121,11 @@ export default function LeavePage() {
                 </TableRow>
               ) : history.length > 0 ? (
                 history.map((record) => (
-                  <TableRow key={record.id}>
+                  <TableRow
+                    key={record.id}
+                    onClick={() => router.push(`/leave/${record.id}`)}
+                    className="cursor-pointer"
+                  >
                     <TableCell className="font-medium">
                       {record.leaveType}
                     </TableCell>

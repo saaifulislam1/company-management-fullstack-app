@@ -41,4 +41,11 @@ router.patch(
   controller.adminUpdateStatusController,
 );
 
+router.get('/:leaveId', controller.getLeaveByIdController);
+router.patch(
+  '/:leaveId',
+  validate(validator.applyLeaveSchema),
+  controller.employeeUpdateLeaveController,
+);
+
 export default router;
