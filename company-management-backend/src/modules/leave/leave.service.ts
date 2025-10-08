@@ -2,8 +2,14 @@ import { prisma } from '@/prisma/client';
 import { ApiError } from '@/utils/apiError';
 import { Leave, LeaveStatus, Prisma } from '@prisma/client';
 import { differenceInBusinessDays } from 'date-fns';
+import { uploadOnCloudinary } from '@/utils/cloudinary';
+import { v4 as uuidv4 } from 'uuid';
 
-export const applyForLeave = async (employeeId: string, data: any) => {
+export const applyForLeave = async (
+  employeeId: string,
+  data: any,
+  attachment?: Express.Multer.File,
+) => {
   const { startDate, endDate, leaveType } = data;
 
   // 1. Calculate the duration of the leave in business days
@@ -39,6 +45,14 @@ export const applyForLeave = async (employeeId: string, data: any) => {
       `Insufficient sick leave balance. You have ${employee.profile.sickLeaveBalance} days remaining.`,
     );
   }
+  let attachmentUrl: string | undefined = undefined;
+
+  if (attachment) {
+    // Generate a unique file name
+    const fileName = `leave_${employeeId}_${uuidv4()}`;
+    const result: any = await uploadOnCloudinary(attachment.buffer, fileName);
+    attachmentUrl = result.secure_url;
+  }
 
   // 4. Create the leave request (status is PENDING by default)
   return prisma.leave.create({
@@ -49,12 +63,9 @@ export const applyForLeave = async (employeeId: string, data: any) => {
       reason: data.reason,
       employeeId: employee.id,
       approvedById: employee.managerId,
-
-      // --- THIS IS THE FIX ---
-      // Explicitly set the initial status for the new workflow
       managerStatus: 'PENDING',
-      adminStatus: null, // Admin status starts as null
-      // --- END FIX ---
+      adminStatus: null,
+      attachmentUrl: attachmentUrl,
     },
   });
 };

@@ -6,7 +6,12 @@ import * as leaveService from './leave.service';
 
 export const applyLeaveController = asyncHandler(
   async (req: AuthRequest, res: Response) => {
-    const leave = await leaveService.applyForLeave(req.employee!.id, req.body);
+    const attachment = req.file;
+    const leave = await leaveService.applyForLeave(
+      req.employee!.id,
+      req.body,
+      attachment,
+    );
     res
       .status(201)
       .json(new ApiResponse(201, leave, 'Leave request submitted'));

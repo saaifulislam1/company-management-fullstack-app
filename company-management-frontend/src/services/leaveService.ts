@@ -52,12 +52,15 @@ export const getAllLeaveRequests = async (): Promise<
  * @description Submits a new leave application.
  */
 export const applyForLeave = async (
-  data: LeaveApplicationData
+  formData: FormData
 ): Promise<LeaveRecord> => {
-  const response = await api.post("/leave/apply", data);
+  const response = await api.post("/leave/apply", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data", // Important for file uploads
+    },
+  });
   return response.data.data;
 };
-
 export const updateLeaveStatus = async (
   leaveId: string,
   status: "APPROVED" | "REJECTED" | "PENDING"

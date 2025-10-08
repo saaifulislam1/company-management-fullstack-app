@@ -34,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { useState } from "react";
 
 // Define the form validation schema using Zod
 const formSchema = z.object({
@@ -44,6 +45,7 @@ const formSchema = z.object({
   endDate: z.date().refine((val) => val !== null, {
     message: "End date is required",
   }),
+  attachment: z.any().optional(),
   reason: z.string().min(3, "Reason must be at least 3 characters long"),
 });
 
@@ -57,13 +59,42 @@ export function LeaveApplicationForm({
   onSuccess,
   onClose,
 }: LeaveApplicationFormProps) {
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
   });
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 500 * 1024) {
+        // 500KB
+        setFileError("File is too large (max 500KB)");
+        setFilePreview(null);
+        form.setValue("attachment", undefined);
+        return;
+      }
+      setFileError(null);
+      setFilePreview(URL.createObjectURL(file));
+      form.setValue("attachment", file);
+    }
+  };
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      await leaveService.applyForLeave(values);
+      const formData = new FormData();
+      Object.entries(values).forEach(([key, value]) => {
+        if (value) {
+          if (value instanceof Date) {
+            formData.append(key, value.toISOString());
+          } else {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            formData.append(key, value as any);
+          }
+        }
+      });
+
+      await leaveService.applyForLeave(formData);
       toast("Your leave request has been submitted.");
       onSuccess(); // Trigger data refresh on the parent page
       onClose(); // Close the dialog
@@ -76,21 +107,6 @@ export function LeaveApplicationForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Leave Type */}
-        {/* <FormField
-          control={form.control}
-          name="leaveType"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Leave Type</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., Vacation, Sick Leave" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        /> */}
-
         <FormField
           control={form.control}
           name="leaveType"
@@ -212,7 +228,33 @@ export function LeaveApplicationForm({
             </FormItem>
           )}
         />
-
+        <FormField
+          control={form.control}
+          name="attachment"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Attachment (Optional)</FormLabel>
+              <FormControl>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                />
+              </FormControl>
+              {fileError && (
+                <p className="text-sm text-destructive">{fileError}</p>
+              )}
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        {filePreview && (
+          <img
+            src={filePreview}
+            alt="Attachment preview"
+            className="mt-2 h-24 w-24 object-cover rounded-md"
+          />
+        )}
         <div className="flex justify-end space-x-2">
           <Button type="button" variant="ghost" onClick={onClose}>
             Cancel
