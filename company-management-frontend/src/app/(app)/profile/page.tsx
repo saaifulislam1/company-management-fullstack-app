@@ -54,22 +54,52 @@ export default function ProfilePage() {
   });
 
   // Fetch the user's full profile data on component mount
+  // useEffect(() => {
+  //   const fetchProfile = async () => {
+  //     if (user) {
+  //       try {
+  //         const profileData = await getMyProfile();
+  //         const profile = profileData.data.profile || {};
+  //         if (profileData.data.manager && profileData.data.manager.profile) {
+  //           setManagerName(
+  //             `${profileData.data.manager.profile.firstName} ${profileData.data.manager.profile.lastName}`
+  //           );
+  //         } else {
+  //           setManagerName("N/A"); // Set a default value if no manager is found
+  //         }
+
+  //         form.reset({
+  //           firstName: profile.firstName || "",
+  //           lastName: profile.lastName || "",
+  //           phone: profile.phone || "",
+  //           address: profile.address || "",
+  //           emergencyContact: profile.emergencyContact || "",
+  //         });
+  //       } catch (error) {
+  //         // 2. Use react-hot-toast for errors
+  //         toast.error("Failed to fetch profile data.");
+  //       }
+  //     }
+  //   };
+  //   fetchProfile();
+  // }, [user, form]);
+
   useEffect(() => {
     const fetchProfile = async () => {
       if (user) {
         try {
           const profileData = await getMyProfile();
           const profile = profileData.data.profile || {};
-          setManagerName(
-            profileData.data.manager.profile.firstName +
-              " " +
-              profileData.data.manager.profile.lastName
-          );
-          console.log(
-            profileData.data.manager.profile.firstName,
-            "profiledata"
-          );
 
+          if (profileData.data.manager?.profile) {
+            setManagerName(
+              `${profileData.data.manager.profile.firstName} ${profileData.data.manager.profile.lastName}`
+            );
+          } else {
+            setManagerName("N/A");
+          }
+
+          // The form.reset() call is safe to keep inside here
           form.reset({
             firstName: profile.firstName || "",
             lastName: profile.lastName || "",
@@ -78,14 +108,17 @@ export default function ProfilePage() {
             emergencyContact: profile.emergencyContact || "",
           });
         } catch (error) {
-          // 2. Use react-hot-toast for errors
-          toast.error("Failed to fetch profile data.");
+          console.log(error);
+          // Only show toast on initial load if user exists but fetch fails
+          // if (!form.getValues("firstName")) {
+          //   console.error(error);
+          //   toast.error("Failed to fetch profile data.");
+          // }
         }
       }
     };
     fetchProfile();
-  }, [user, form]);
-
+  }, [user]); // <-- Remove 'form' and 'toast' from this array
   // Handle the form submission
   async function onSubmit(values: z.infer<typeof profileFormSchema>) {
     try {

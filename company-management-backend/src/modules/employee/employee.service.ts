@@ -56,10 +56,14 @@ export const registerEmployee = async (data: any) => {
 export const getEmployeeProfile = async (employeeId: string) => {
   const employee = await prisma.employee.findUnique({
     where: { id: employeeId },
-    include: {
+    select: {
+      id: true,
+      email: true,
+      role: true,
       profile: true,
       manager: {
         select: {
+          id: true,
           profile: {
             select: {
               firstName: true,
@@ -75,8 +79,7 @@ export const getEmployeeProfile = async (employeeId: string) => {
     throw new ApiError(404, 'Employee not found');
   }
 
-  const { password: _, ...employeeWithoutPassword } = employee;
-  return employeeWithoutPassword;
+  return employee;
 };
 
 export const findAllEmployees = async () => {

@@ -1,12 +1,10 @@
-//@ts-nocheck
 import {
   PrismaClient,
   Department,
   UserRole,
   LeaveStatus,
 } from '@prisma/client';
-import { hashPassword } from '../src/utils/password';
-import { faker } from '@faker-js/faker';
+import { hashPassword } from '@/utils/password';
 import {
   subDays,
   addDays,
@@ -14,23 +12,25 @@ import {
   setMinutes,
   setSeconds,
   format,
+  subYears,
 } from 'date-fns';
 
 const prisma = new PrismaClient();
 
-// --- HELPER FUNCTIONS ---
+// --- HELPER FUNCTIONS (No Faker) ---
 
-/** Generates a random time for a given date within a specified hour range. */
-const randomTime = (date: Date, startHour: number, endHour: number): Date => {
-  const hour = faker.number.int({ min: startHour, max: endHour - 1 });
-  const minute = faker.number.int({ min: 0, max: 59 });
-  return setSeconds(setMinutes(setHours(date, hour), minute), 0);
-};
+/** Generates a random integer between min (inclusive) and max (inclusive). */
+const getRandomInt = (min: number, max: number): number =>
+  Math.floor(Math.random() * (max - min + 1)) + min;
+
+/** Selects a random element from an array. */
+const getRandomElement = <T>(arr: readonly T[]): T =>
+  arr[Math.floor(Math.random() * arr.length)];
 
 // --- MAIN SEEDING LOGIC ---
 
 async function main() {
-  console.log(`🔥 Starting the comprehensive seeding process...`);
+  console.log(`🔥 Starting the seeding process (without faker)...`);
 
   // 1. --- CLEAN UP THE DATABASE ---
   console.log('🧹 Cleaning old data...');
@@ -40,9 +40,8 @@ async function main() {
   await prisma.employee.deleteMany();
   console.log('✅ Old data cleaned successfully.');
 
-  // 2. --- DEFINE THE COMPANY STRUCTURE (21 Employees) ---
+  // 2. --- DEFINE THE COMPANY STRUCTURE ---
   const companyStructure = [
-    // Top Level
     {
       email: 'admin@example.com',
       role: UserRole.ADMIN,
@@ -59,8 +58,6 @@ async function main() {
       firstName: 'Harriet',
       lastName: 'Rosso',
     },
-
-    // Managers
     {
       email: 'eng.manager@example.com',
       role: UserRole.MANAGER,
@@ -78,61 +75,75 @@ async function main() {
       lastName: 'Saleswoman',
     },
     {
-      email: 'marketing.manager@example.com',
-      role: UserRole.MANAGER,
+      email: 'dev1@example.com',
+      role: UserRole.EMPLOYEE,
+      department: Department.SOFTWARE,
+      managerEmail: 'eng.manager@example.com',
+      firstName: 'Dev',
+      lastName: 'One',
+    },
+    {
+      email: 'dev2@example.com',
+      role: UserRole.EMPLOYEE,
+      department: Department.SOFTWARE,
+      managerEmail: 'eng.manager@example.com',
+      firstName: 'Dev',
+      lastName: 'Two',
+    },
+    {
+      email: 'qa1@example.com',
+      role: UserRole.EMPLOYEE,
+      department: Department.ENGINEERING,
+      managerEmail: 'eng.manager@example.com',
+      firstName: 'Tess',
+      lastName: 'Tur',
+    },
+    {
+      email: 'hr1@example.com',
+      role: UserRole.EMPLOYEE,
+      department: Department.HR,
+      managerEmail: 'hr.manager@example.com',
+      firstName: 'Rec',
+      lastName: 'Ruter',
+    },
+    {
+      email: 'sales1@example.com',
+      role: UserRole.EMPLOYEE,
+      department: Department.SALES,
+      managerEmail: 'sales.manager@example.com',
+      firstName: 'Rep',
+      lastName: 'One',
+    },
+    {
+      email: 'marketing1@example.com',
+      role: UserRole.EMPLOYEE,
       department: Department.MARKETING,
       managerEmail: 'admin@example.com',
       firstName: 'Mark',
       lastName: 'Ketter',
     },
-
-    // Teams
-    ...Array.from({ length: 5 }, () => ({
-      email: faker.internet.email(),
-      role: UserRole.EMPLOYEE,
-      department: Department.SOFTWARE,
-      managerEmail: 'eng.manager@example.com',
-    })),
-    ...Array.from({ length: 2 }, () => ({
-      email: faker.internet.email(),
-      role: UserRole.EMPLOYEE,
-      department: Department.ENGINEERING,
-      managerEmail: 'eng.manager@example.com',
-    })),
-    ...Array.from({ length: 2 }, () => ({
-      email: faker.internet.email(),
-      role: UserRole.EMPLOYEE,
-      department: Department.HR,
-      managerEmail: 'hr.manager@example.com',
-    })),
-    ...Array.from({ length: 3 }, () => ({
-      email: faker.internet.email(),
-      role: UserRole.EMPLOYEE,
-      department: Department.SALES,
-      managerEmail: 'sales.manager@example.com',
-    })),
-    ...Array.from({ length: 2 }, () => ({
-      email: faker.internet.email(),
-      role: UserRole.EMPLOYEE,
-      department: Department.MARKETING,
-      managerEmail: 'marketing.manager@example.com',
-    })),
-    ...Array.from({ length: 2 }, () => ({
-      email: faker.internet.email(),
+    {
+      email: 'accountant1@example.com',
       role: UserRole.EMPLOYEE,
       department: Department.ACCOUNTING,
       managerEmail: 'admin@example.com',
-    })),
+      firstName: 'Count',
+      lastName: 'Er',
+    },
     {
-      email: faker.internet.email(),
-      role: UserRole.INTERN,
+      email: 'intern1@example.com',
+      role: UserRole.EMPLOYEE,
       department: Department.INTERN,
       managerEmail: 'eng.manager@example.com',
+      firstName: 'New',
+      lastName: 'Bie',
     },
   ];
 
   // 3. --- CREATE ALL EMPLOYEES AND PROFILES ---
-  console.log('👤 Creating employee and profile records...');
+  console.log(
+    `👤 Creating ${companyStructure.length} employee and profile records...`,
+  );
   const hashedPassword = await hashPassword('password123');
   const employeeMap = new Map<string, any>();
 
@@ -144,10 +155,10 @@ async function main() {
         role: userData.role,
         profile: {
           create: {
-            firstName: userData.firstName || faker.person.firstName(),
-            lastName: userData.lastName || faker.person.lastName(),
+            firstName: userData.firstName,
+            lastName: userData.lastName,
             department: userData.department,
-            dateOfJoining: faker.date.past({ years: 3 }),
+            dateOfJoining: subYears(new Date(), getRandomInt(1, 3)),
             vacationBalance: 20,
             sickLeaveBalance: 10,
           },
@@ -167,10 +178,11 @@ async function main() {
     if (employee.managerEmail) {
       const manager = employeeMap.get(employee.managerEmail);
       if (manager) {
-        await prisma.employee.update({
+        const updatedEmployee = await prisma.employee.update({
           where: { id: employee.id },
           data: { managerId: manager.id },
         });
+        employeeMap.set(employee.email, { ...employee, ...updatedEmployee });
       }
     }
   }
@@ -178,106 +190,90 @@ async function main() {
 
   // 5. --- GENERATE DATA FOR EACH EMPLOYEE ---
   console.log(
-    '📊 Generating attendance and leave records for all employees (this may take a moment)...',
+    '📊 Generating attendance and leave records for all employees...',
   );
-  const allEmployeesWithManager = await prisma.employee.findMany();
+  const allLeaveRecords = [];
+  const allAttendanceRecords = [];
+  const today = new Date();
 
-  for (const employee of allEmployeesWithManager) {
-    const leaveRecordsToCreate = [];
-    const attendanceRecordsToCreate = [];
+  for (const employee of employeeMap.values()) {
     const datesWithLeave = new Set<string>();
-    const today = new Date();
 
-    // Generate ~10 leave requests per employee over the last 2 years
-    for (let i = 0; i < 10; i++) {
-      const startDate = faker.date.past({ years: 2 });
-      const leaveDuration = faker.number.int({ min: 1, max: 4 });
+    // Generate ~5 leave requests per employee
+    for (let i = 0; i < 5; i++) {
+      const startDate = subDays(today, getRandomInt(10, 365));
+      const leaveDuration = getRandomInt(1, 3);
       const endDate = addDays(startDate, leaveDuration);
 
-      const managerStatus = faker.helpers.arrayElement([
+      const managerStatus = getRandomElement([
         LeaveStatus.APPROVED,
         LeaveStatus.PENDING,
         LeaveStatus.REJECTED,
       ]);
-      // Admin only acts if manager approved
       const adminStatus =
         managerStatus === 'APPROVED'
-          ? faker.helpers.arrayElement([
-              LeaveStatus.APPROVED,
-              LeaveStatus.REJECTED,
-              null,
-            ])
+          ? getRandomElement([LeaveStatus.APPROVED, LeaveStatus.REJECTED, null])
           : null;
 
       if (adminStatus === 'APPROVED') {
-        for (let d = 0; d <= leaveDuration; d++) {
+        for (let d = 0; d < leaveDuration; d++) {
           datesWithLeave.add(format(addDays(startDate, d), 'yyyy-MM-dd'));
         }
       }
-      leaveRecordsToCreate.push({
+      allLeaveRecords.push({
         employeeId: employee.id,
-        leaveType: faker.helpers.arrayElement(['VACATION', 'SICK']),
+        leaveType: getRandomElement(['VACATION', 'SICK']),
         startDate,
         endDate,
-        reason: faker.lorem.sentence(),
+        reason: 'Personal time off request.',
         managerStatus,
         adminStatus,
         approvedById: employee.managerId,
       });
     }
 
-    // Generate attendance for the last 2 years (730 days)
-    for (let i = 0; i < 730; i++) {
+    // Generate attendance for the last year (365 days)
+    for (let i = 0; i < 365; i++) {
       const date = subDays(today, i);
       const dateString = format(date, 'yyyy-MM-dd');
       const dayOfWeek = date.getDay();
 
-      // Skip weekends, leave days, and some random days
       if (
         dayOfWeek === 6 ||
         dayOfWeek === 0 ||
         datesWithLeave.has(dateString) ||
-        Math.random() < 0.1
-      ) {
+        Math.random() < 0.15
+      )
         continue;
-      }
 
-      // Simulate 1 to 3 work sessions per day
-      const sessions = faker.number.int({ min: 1, max: 3 });
-      let lastCheckOut = randomTime(date, 9, 10);
+      const sessions = getRandomInt(1, 3);
+      let lastCheckOut = new Date(setHours(date, getRandomInt(9, 10)));
 
       for (let j = 0; j < sessions; j++) {
         const checkIn = lastCheckOut;
-        const workDurationHours = faker.number.float({
-          min: 1,
-          max: 4.5,
-          precision: 0.1,
-        });
+        const workDurationHours = Math.random() * 3.5 + 1;
         const checkOut = new Date(
           checkIn.getTime() + workDurationHours * 60 * 60 * 1000,
         );
-        attendanceRecordsToCreate.push({
+        allAttendanceRecords.push({
           employeeId: employee.id,
           checkIn,
           checkOut,
           workingHours: workDurationHours,
         });
 
-        const breakDurationMs =
-          faker.number.int({ min: 30, max: 75 }) * 60 * 1000;
+        const breakDurationMs = getRandomInt(30, 90) * 60 * 1000;
         lastCheckOut = new Date(checkOut.getTime() + breakDurationMs);
       }
     }
-
-    await prisma.leave.createMany({
-      data: leaveRecordsToCreate,
-      skipDuplicates: true,
-    });
-    await prisma.attendance.createMany({
-      data: attendanceRecordsToCreate,
-      skipDuplicates: true,
-    });
   }
+
+  // 6. --- PERFORM BULK DATABASE INSERT ---
+  console.log(
+    `💾 Inserting ${allLeaveRecords.length} leave records and ${allAttendanceRecords.length} attendance records...`,
+  );
+  await prisma.leave.createMany({ data: allLeaveRecords });
+  await prisma.attendance.createMany({ data: allAttendanceRecords });
 
   console.log(`\n🎉 Seeding finished successfully!`);
   console.log(`- Default Password for all users: "password123"`);
@@ -285,8 +281,7 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error('❌ An error occurred during seeding:');
-    console.error(e);
+    console.error('❌ An error occurred during seeding:', e);
     process.exit(1);
   })
   .finally(async () => {

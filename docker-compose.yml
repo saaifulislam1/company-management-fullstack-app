@@ -14,7 +14,7 @@ services:
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
     # This command ensures the backend waits for the DB to be ready
     # and runs migrations before starting.
-    command: sh -c "npx prisma migrate deploy && npm start"
+    command: sh -c "npx prisma migrate deploy && npx prisma db seed && npm start"
     depends_on:
       db:
         condition: service_healthy
