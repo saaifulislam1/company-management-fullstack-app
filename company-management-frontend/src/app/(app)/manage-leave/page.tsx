@@ -36,10 +36,12 @@ import {
   adminUpdateLeaveStatus,
   LeaveRecordWithEmployee,
 } from "@/services/leaveService";
+import { useRouter } from "next/navigation";
 
 type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED";
 
 export default function ManageLeavePage() {
+  const router = useRouter();
   const [requests, setRequests] = useState<LeaveRecordWithEmployee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -116,7 +118,11 @@ export default function ManageLeavePage() {
                 </TableRow>
               ) : requests.length > 0 ? (
                 requests.map((req) => (
-                  <TableRow key={req.id}>
+                  <TableRow
+                    key={req.id}
+                    onClick={() => router.push(`/leave/${req.id}`)}
+                    className="cursor-pointer"
+                  >
                     <TableCell className="font-medium">
                       <Link
                         href={`/employees/${req.employeeId}`}

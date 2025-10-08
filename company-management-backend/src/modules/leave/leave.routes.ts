@@ -4,6 +4,7 @@ import { authorize } from '@/middleware/role';
 import { validate } from '@/middleware/validate';
 import * as validator from './leave.validator';
 import * as controller from './leave.controller';
+import { upload } from '@/middleware/multer';
 
 const router = Router();
 
@@ -13,6 +14,7 @@ router.use(protect);
 // Employee routes
 router.post(
   '/apply',
+  upload.single('attachment'),
   validate(validator.applyLeaveSchema),
   controller.applyLeaveController,
 );
@@ -37,6 +39,13 @@ router.patch(
   authorize('ADMIN', 'HR'),
   validate(validator.updateLeaveStatusSchema),
   controller.adminUpdateStatusController,
+);
+
+router.get('/:leaveId', controller.getLeaveByIdController);
+router.patch(
+  '/:leaveId',
+  validate(validator.applyLeaveSchema),
+  controller.employeeUpdateLeaveController,
 );
 
 export default router;

@@ -36,12 +36,14 @@ import {
   LeaveRecordWithEmployee,
 } from "@/services/leaveService";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 // --- TYPE DEFINITIONS ---
 // These types must match the data structure from your backend service.
 type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED";
 
 export default function TeamRequestsPage() {
+  const router = useRouter();
   const [requests, setRequests] = useState<LeaveRecordWithEmployee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -117,7 +119,11 @@ export default function TeamRequestsPage() {
                 </TableRow>
               ) : requests.length > 0 ? (
                 requests.map((req) => (
-                  <TableRow key={req.id}>
+                  <TableRow
+                    key={req.id}
+                    onClick={() => router.push(`/leave/${req.id}`)}
+                    className="cursor-pointer"
+                  >
                     {/* Employee Name */}
                     <TableCell className="font-medium">
                       <Link

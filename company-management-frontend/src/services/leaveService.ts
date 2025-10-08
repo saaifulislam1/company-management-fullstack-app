@@ -11,6 +11,7 @@ export interface LeaveRecord {
   employeeId: string;
   managerStatus: LeaveStatus;
   adminStatus: LeaveStatus | null; // Can be null
+  attachmentUrl: string | null;
 }
 type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED";
 // Defines the shape of the data needed to apply for leave
@@ -24,6 +25,7 @@ export interface LeaveApplicationData {
 export interface LeaveRecordWithEmployee extends LeaveRecord {
   employee: {
     id: string;
+    managerId: string | null;
     profile: {
       firstName: string;
       lastName: string;
@@ -52,12 +54,15 @@ export const getAllLeaveRequests = async (): Promise<
  * @description Submits a new leave application.
  */
 export const applyForLeave = async (
-  data: LeaveApplicationData
+  formData: FormData
 ): Promise<LeaveRecord> => {
-  const response = await api.post("/leave/apply", data);
+  const response = await api.post("/leave/apply", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data", // Important for file uploads
+    },
+  });
   return response.data.data;
 };
-
 export const updateLeaveStatus = async (
   leaveId: string,
   status: "APPROVED" | "REJECTED" | "PENDING"
@@ -87,5 +92,19 @@ export const managerUpdateLeaveStatus = async (
   const response = await api.patch(`/leave/team-requests/${leaveId}`, {
     status,
   });
+  return response.data.data;
+};
+export const getLeaveById = async (
+  leaveId: string
+): Promise<LeaveRecordWithEmployee> => {
+  const response = await api.get(`/leave/${leaveId}`);
+  return response.data.data;
+};
+
+export const employeeUpdateLeave = async (
+  leaveId: string,
+  data: LeaveApplicationData
+): Promise<LeaveRecord> => {
+  const response = await api.patch(`/leave/${leaveId}`, data);
   return response.data.data;
 };
