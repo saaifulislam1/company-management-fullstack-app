@@ -1,5 +1,5 @@
 # ---- Base Stage ----
-FROM node:18-alpine AS base
+FROM node:18-slim AS base
 WORKDIR /app
 
 # ---- Dependencies Stage ----

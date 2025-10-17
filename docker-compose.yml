@@ -3,6 +3,7 @@ version: "3.8"
 services:
   # The Backend Service
   backend:
+    platform: linux/amd64
     build:
       context: ./company-management-backend # Path to backend Dockerfile
     image: saaiful1/cms-backend:latest
