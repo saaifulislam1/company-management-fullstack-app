@@ -14,6 +14,7 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+      - REDIS_URL=${REDIS_URL} # <-- This is the missing line 🔑
     # This command ensures the backend waits for the DB to be ready
     # and runs migrations before starting.
     command: sh -c "npx prisma migrate deploy && npx prisma db seed && npm start"
