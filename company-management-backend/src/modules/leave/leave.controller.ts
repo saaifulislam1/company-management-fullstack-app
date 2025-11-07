@@ -6,7 +6,12 @@ import * as leaveService from './leave.service';
 
 export const applyLeaveController = asyncHandler(
   async (req: AuthRequest, res: Response) => {
-    const leave = await leaveService.applyForLeave(req.employee!.id, req.body);
+    const attachment = req.file;
+    const leave = await leaveService.applyForLeave(
+      req.employee!.id,
+      req.body,
+      attachment,
+    );
     res
       .status(201)
       .json(new ApiResponse(201, leave, 'Leave request submitted'));
@@ -76,5 +81,25 @@ export const adminUpdateStatusController = asyncHandler(
       .json(
         new ApiResponse(200, updatedRequest, 'Leave status updated by admin'),
       );
+  },
+);
+export const getLeaveByIdController = asyncHandler(async (req, res) => {
+  const { leaveId } = req.params;
+  const leave = await leaveService.getLeaveById(leaveId);
+  res.status(200).json(new ApiResponse(200, leave, 'Leave details fetched'));
+});
+
+export const employeeUpdateLeaveController = asyncHandler(
+  async (req: AuthRequest, res) => {
+    const { leaveId } = req.params;
+    const employeeId = req.employee!.id;
+    const updatedLeave = await leaveService.employeeUpdateLeave(
+      leaveId,
+      employeeId,
+      req.body,
+    );
+    res
+      .status(200)
+      .json(new ApiResponse(200, updatedLeave, 'Leave request updated'));
   },
 );
