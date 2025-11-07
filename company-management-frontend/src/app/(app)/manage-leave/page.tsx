@@ -37,6 +37,7 @@ import {
   LeaveRecordWithEmployee,
 } from "@/services/leaveService";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED";
 
@@ -76,20 +77,21 @@ export default function ManageLeavePage() {
     });
   };
 
-  const getStatusBadgeVariant = (status: LeaveStatus | null) => {
-    if (!status) return "secondary";
+  const getStatusBadgeClasses = (status: LeaveStatus | null) => {
+    if (!status) return "bg-gray-200 text-gray-800"; // Awaiting
+
     switch (status) {
       case "APPROVED":
-        return "default";
+        return "bg-green-600 text-white";
       case "PENDING":
-        return "secondary";
+        return "bg-yellow-400 text-black";
+
       case "REJECTED":
-        return "destructive";
+        return "bg-red-600 text-white";
       default:
-        return "outline";
+        return "bg-gray-200 text-gray-800";
     }
   };
-
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Manage Leave Requests</h1>
@@ -151,13 +153,17 @@ export default function ManageLeavePage() {
                       </HoverCard>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={getStatusBadgeVariant(req.managerStatus)}>
+                      <Badge
+                        className={cn(getStatusBadgeClasses(req.managerStatus))}
+                      >
                         {req.managerStatus}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={getStatusBadgeVariant(req.adminStatus)}>
-                        {req.adminStatus || "Awaiting"}
+                      <Badge
+                        className={cn(getStatusBadgeClasses(req.adminStatus))}
+                      >
+                        {req.adminStatus || "PENDING"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">

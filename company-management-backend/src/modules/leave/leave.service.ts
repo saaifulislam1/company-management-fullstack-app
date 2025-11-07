@@ -53,6 +53,17 @@ export const applyForLeave = async (
     const result: any = await uploadOnCloudinary(attachment.buffer, fileName);
     attachmentUrl = result.secure_url;
   }
+  let managerStatus: LeaveStatus = 'PENDING';
+  let adminStatus: LeaveStatus | null = null;
+  let approvedById = employee.managerId;
+
+  // If the user has no manager, bypass the manager step
+  // and send it directly to the admin queue.
+  if (!employee.managerId) {
+    managerStatus = 'APPROVED';
+    adminStatus = 'PENDING';
+    approvedById = null;
+  }
 
   // 4. Create the leave request (status is PENDING by default)
   return prisma.leave.create({
@@ -62,10 +73,10 @@ export const applyForLeave = async (
       endDate: data.endDate,
       reason: data.reason,
       employeeId: employee.id,
-      approvedById: employee.managerId,
-      managerStatus: 'PENDING',
-      adminStatus: null,
       attachmentUrl: attachmentUrl,
+      approvedById: approvedById,
+      managerStatus: managerStatus,
+      adminStatus: adminStatus,
     },
   });
 };
